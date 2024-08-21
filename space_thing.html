@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html> 
+    <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&family=Rowdies:wght@300;400;700&family=Signika:wght@300..700&display=swap" rel="stylesheet">
+
+
+
+        <title>A Tab =D</title> 
+        <style type="text/css">
+            
+
+
+
+        </style>
+    </head>
+    <body>
+        
+            <canvas id="mycanvas" align="center"></canvas> 
+        
+    </body>
+ 
+    <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
+
+    <script>
+
+function main() {
+
+var programCode = function(processingInstance) {
+with (processingInstance) {
+
+/*****
+
+Ideas/TODO
+
+- add powerups (ingame like ammo) WIP
+- home screen background
+- another enemy type (maybe split when killed?)
+- bossfight
+x add upgrades (a way to spend coins, seperate page)
+x add enemy dying animation
+x make stars a constructor
+x make camera a constructor
+x put spawnenemy into constructor
+x transition (between scenes)
+
+*****/
+
+{
+size(600, 600);
+ 
+angleMode = "radians";
+
+smooth();
+frameRate(60);
+
+// a random random seed (to re random the randoms)
+var r = Math.random()*10000;
+
+// fonts
+var MPLUS = createFont("M PLUS Rounded 1c");
+var ROWDIES = createFont("Rowdies");
+var SIGNIKA = createFont("Signika");
+var COMIC_MS = createFont("comic sans ms");} // setup
+
+{
+// colows
+var colorScheme = {
+    backColor: color(31, 16, 31),
+    playerColor: color(255, 255, 255),
+};
+
+var keys = {};
+var scene = "home";
+var scenes;
+var deathImage;
+
+// mice
+var rightClick,
+    rightClickHold,
+    click,
+    clickHold;
+
+var vars;
+
+var deathMessages = {
+    "shot"  : ["due to being filled full of lead", "via high speed orbs"],
+    "fall"  : ["by abandoning the world", "cuz you fell from a high place"],
+    "ignore": ["due to letting them get away", "because you couldnt get them"],
+};
+
+var discoveredEnemies = ["hedgeHog"];} // pretend globals
+
+{
+
+function p(x, y) {
+    return {x:x, y:y};
+}
+
+function findSign(n) {
+    if (n === 0) {
+        return 0;
+    }
+    return n/abs(n);
+}
+
+function distSq(x1, y1, x2, y2) {
+    return Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2);
+}
+
+function rectCirc(rec, circ) {
+    var nx = constrain(circ.position.x, rec.position.x, rec.position.x + rec.width),
+        ny = constrain(circ.position.y, rec.position.y, rec.position.y + rec.height);
+    
+    return distSq(nx, ny, circ.position.x, circ.position.y) < Math.pow(circ.r, 2);
+}
+
+function circCirc(circ1, circ2) {
+    return distSq(circ1.position.x, circ1.position.y, circ2.position.x, circ2.position.y) < sq(circ1.r + circ2.r);
+}
+
+function arcCirc(arc1, circ) {
+    var ang = atan2(circ.position.y - arc1.y, circ.position.x - arc1.x);
+    ang = constrain(ang, min(arc1.start, arc1.stop), max(arc1.start, arc1.stop));
+    var x = cos(ang) * arc1.r + arc1.x, 
+        y = sin(ang) * arc1.r + arc1.y;
+        
+    return distSq(x, y, circ.position.x, circ.position.y) < sq(circ.r + arc1.SW);
+}} // functions for collisions
+
+{
+
+// stolen from someone on stack overflow
+function clone(obj) {
+    if (null === obj || "object" != typeof obj) { return obj };
+    var copy = obj.constructor();
+    for (var attr in obj) {
+        if (obj.hasOwnProperty(attr)) { copy[attr] = obj[attr] };
+    }
+    return copy;
+}
+
+function changeScene(to, changeVars, fromTransition) {
+    if (changeVars === undefined) {
+        changeVars = true;
+
+    }
+    if (!fromTransition) {
+
+        transition.reset({
+            to: to,
+            from: scene,
+        });
+
+        scene = "transitionScene";
+    } else {
+        scene = to;
+
+        if (changeVars) {
+            var cloneVar = JSON.parse(JSON.stringify(scenes[scene].vars));
+            vars = cloneVar;
+        }
+    }
+    
+}} // utility functions
+
+{
+var pewPew = (function() {
+    background(0);
+    pushMatrix();
+    translate(342, 57);
+    scale(-1, 1);
+    noStroke();
+    fill(255);
+    
+    ellipse(20, 0, 22, 70);
+    ellipse(44, 0, 24, 90);
+    ellipse(72, 0, 28, 110);
+    rect(170, -55, 170, 110, 40, 100, 100, 40);
+    stroke(255);
+    strokeWeight(25);
+    line(10, 0, 200, 0);
+    noFill();
+    arc(145, 35, 70, 70, -PI/2, -0.25);
+    arc(145, -35, 70, 70, 0.25, PI/2);
+    strokeWeight(30);
+    fill(255);
+    strokeJoin(ROUND);
+    beginShape();
+    vertex(250, 57);
+    vertex(270, 110);
+    vertex(320, 110);
+    vertex(280, 57);
+    endShape();
+    
+    fill(255, 0, 0, 100);
+    noStroke();
+    var msk = get(0, 0, 341, 184);
+    background(colorScheme.playerColor);
+    var filling = get(0, 0, 341, 184);
+    popMatrix();
+    if (filling) {
+        filling.mask(msk);
+    }
+    return {img: filling, w: 341, h: 184};
+})();
+
+var ammoImg = (function() {
+    background(0, 0);
+    background(0, 0);
+    fill(colorScheme.playerColor);
+    noStroke();
+    rect(0, 500, 300, 30);
+    rect(37.5, 460, 225, 30);
+    rect(0, 200, 300, 250, 0, 0, 5, 5);
+    
+    arc(150, 190, 280, 300, -PI, 0);
+    return {image: get(0, 0, 300, 530), width: 300, height: 530};
+})();
+
+var hedgeHog = (function() {
+    background(0);
+    noStroke();
+    fill(255);
+    ellipse(200, 200, 270, 270);
+    beginShape();
+    randomSeed(40);
+    for(var i = 0; i < 360; i += 20){
+        vertex(200 + cos(radians(i))*135 + random(5, -5), 200 + sin(radians(i)) * 135 + random(5, -5));
+        vertex(200 + cos(radians(i) + radians(10))*175 + random(5, -5), 200 + sin(radians(i) + radians(10)) * 175 + random(5, -5));
+    }
+    endShape();
+    randomSeed(501);
+    beginShape();
+    fill(0);
+    for(var i = 0; i < 360; i += 30) {
+        vertex(cos(radians(i))*86 + 171 + random(-4, 4), sin(radians(i))*57 + 166 + random(-4, 4));
+    }
+    endShape();
+    
+    fill(255);
+    ellipse(200, 175, 30, 30);
+    ellipse(129, 164, 30, 30);
+    var shoop = get(0, 0, 400, 400);
+    if (shoop) {
+        shoop.mask(shoop);
+    }
+    return {image: shoop, width: 400, height: 400};
+})();
+
+var ufo = (function() {
+    background(0);
+    noStroke();
+    fill(255);
+    ellipse(200, 250, 350, 120);
+    stroke(255);
+    strokeWeight(17);
+    fill(0);
+    ellipse(200, 220, 170, 160);
+    noFill();
+    arc(200, 200, 250, 100, radians(30), radians(150));
+    noStroke();
+    fill(255);
+    rect(100, 245, 200, 50);
+    fill(0);
+    ellipse(200, 286, 25, 25);
+    ellipse(133, 280, 25, 25);
+    ellipse(267, 280, 25, 25);
+    ellipse(335, 261, 25, 25);
+    ellipse(65, 261, 25, 25);
+
+    stroke(255);
+    strokeWeight(17);
+    noFill();
+    point(251, 210);
+    arc(200, 200, 80, 60, radians(-90), radians(-45));
+
+    var msk = get(0, 0, 400, 400);
+    var filling = get(0, 0, 400, 400);
+    if (filling) {
+        filling.mask(msk);
+    }
+    return {image: filling, width: 400, height: 400};
+})();
+
+var coin = (function() {
+    background(0);
+
+    noStroke();
+
+    fill(255);
+    ellipse(200, 200, 400, 400);
+
+    fill(0);
+    ellipse(200, 200, 370, 370);
+
+    fill(255);
+    ellipse(200, 200, 340, 340);
+
+    fill(0);
+
+    textFont(COMIC_MS, 230);
+    textAlign(CENTER, CENTER);
+
+    text("$", 200, 185);
+
+    var filling = get(0, 0, 400, 400);
+    var msk = filling;
+    if (filling) {
+        filling.mask(msk);
+    }
+
+    return {image: filling, width: 400, height: 400};
+})();} // Images
+
+{
+var player, enemies, bullets, ammo, stars, _camera, enemyParticles, powerUps;
+
+randomSeed(r);
+
+var ammo = (function() {
+    function Ammo() {
+        this.Ammo = (function() {
+            var Ammo = function (x, y, scale) {
+                this.x = x;
+                this.y = y;
+                
+                this.scale = scale;
+                
+                this.width = scale * ammoImg.width;
+                this.height = scale * ammoImg.height;
+            };
+            Ammo.prototype.draw = function() {
+                pushMatrix();
+                    translate(this.x, this.y);
+                    scale(this.scale);
+                    image(ammoImg.image, 0, 0, ammoImg.width, ammoImg.height);
+                popMatrix();
+            };
+            Ammo.prototype.goTo = function(x, y) {
+                this.x = x;
+                this.y = y;
+            };
+            Ammo.prototype.spawn = function() {
+                this.goTo(random(0, 600), _camera.position[1] - 60);
+            };
+            Ammo.prototype.playerCollide = function(player) {
+                var rect = {position: p(this.x, this.y), width: this.width, height: this.height};
+                return rectCirc(rect, player);
+            };
+            return Ammo;
+        })();
+        this.ammo = [];
+        for(var i = 0; i < 4; i ++) {
+            this.ammo.push(new this.Ammo(random(0, 600), random(0, 600), 0.1));
+        }
+    }
+    
+    Ammo.prototype.run = function() {
+        for(var i in this.ammo) {
+            if (this.ammo[i].y > _camera.position[1] + 600) {
+                this.ammo[i].spawn();
+            }
+            this.ammo[i].draw();
+        }
+    };
+
+    Ammo.prototype.playerCollide = function(player) {
+        var n = 0;
+        for (var i in this.ammo) {
+            if(this.ammo[i].playerCollide(player)) {
+                this.ammo[i].spawn();
+                n ++;
+            }
+        }
+        return n;
+    };
+
+    Ammo.prototype.reset = function() {
+        this.ammo = [];
+        for(var i = 0; i < 4; i ++) {
+            this.ammo.push(new this.Ammo(random(0, 600), random(0, 600), 0.1));
+        }
+    }
+
+    return new Ammo();
+})();
+
+// WIP FRAMEWORK
+    // * need graphics
+var powerUps = (function() {
+    function PowerUps() {
+        this.powerUps = [];
+        this.powerUpTypes = {
+            "health": {
+                effect: function() {
+                    player.health = player.maxHealth;
+                },
+                image: (function() {
+                    background(0, 0);
+                    fill(255);
+                    noStroke();
+                    ellipse(200, 200, 400, 400);
+
+                    return {image: get(0, 0, 400, 400), width: 400, height: 400};
+                })(),
+                width: 0.15,
+                height: 0.15,
+
+            }
+        };
+        this.types = ["health"];
+        this.PowerUp = (function() {
+            function PowerUp(config) {
+                this.type = config.type;
+                this.x = config.x;
+                this.y = config.y;
+                this.type = powerUps.powerUpTypes;
+                this.image = this.type.image.image;
+                this.width = this.type.width * this.type.image.width;
+                this.height = this.type.height * this.type.image.height;
+
+                this.gone = false
+            }
+
+            PowerUp.prototype.display = function() {
+                pushMatrix();
+                    translate(this.x - this.width/2, this.y - this.height/2);
+                    image(this.image, this.width, this.height);
+                popMatrix();
+            };  
+
+            PowerUp.prototype.update = function() {
+                if (this.y > _camera.position[1] + 600 + this.width/2) {
+                    this.gone = true;
+                }
+            };
+
+            PowerUp.prototype.run = function() {
+                this.update();
+                this.display();
+            };
+
+            return PowerUp;
+        })();
+    }
+
+    PowerUps.prototype.run = function() {
+        for (var i = this.powerUps.length - 1; i >= 0; i--) {
+            this.powerUps[i].run();
+            if (this.powerUps[i].gone) {
+                this.powerUps.splice(i, 1);
+                this.spawn();
+            }
+        }
+    };
+
+    PowerUps.prototype.add = function(config) {
+        this.powerUps.push(new this.PowerUp(config));
+    }
+
+    PowerUps.prototype.spawn = function() {
+        this.add({
+            x: random(50, 550),
+            y: random(_camera.position[1] - 1800, _camera.position[1] - 900),
+            type: this.types[floor(random(0, this.types.length))],
+        });
+    }
+
+    return new PowerUps();
+})();
+
+var stars = (function() {
+
+    function Stars() {
+        this.stars = [];
+        this.count = 40;
+    }
+
+    Stars.prototype.generate = function(initial_star) {
+        return [random(0, width), random(_camera.position[1] - 5, initial_star? _camera.position[1] + 600 :  _camera.position[1] - 5), random(0, 5)];
+    }
+
+    Stars.prototype.reset = function() {
+        var a = [];
+        for (var i = 0; i < this.count; i ++) {
+            a.push(this.generate(true));
+        }
+        this.stars = a;
+    }
+
+    Stars.prototype.run = function() {
+
+        fill(colorScheme.playerColor, 200);
+        noStroke();
+
+        for(var i in this.stars) {
+
+            var size = 1 + noise(frameCount/40 + this.stars[i][2]) * 8;
+
+            ellipse(this.stars[i][0], this.stars[i][1], size, size);
+
+            if (this.stars[i][1] > _camera.position[1] + 605) {
+                this.stars[i] = this.generate();
+            }
+        }
+    };
+
+    return new Stars();
+})();
+
+var _camera = (function() {
+    function Camera_() {
+        this.position = [0, 0];
+        this.minY = 0;
+        this.target = [0, 0];
+        this.speedY = 0.5;
+        this.speedX = 0;
+    }
+
+    Camera_.prototype.run = function() {
+        if (player.position.y - player.r * 3 < this.minY) {
+            this.minY = player.position.y - player.r * 3;
+        }
+        
+        this.target[0] = player.position.x - width/2;
+        
+        this.position[0] = lerp(this.position[0], this.target[0], this.speedX);
+        this.position[1] = lerp(this.position[1], this.target[1], this.speedY);
+        
+        this.target[1] = min(this.target[1], this.minY);
+    };
+
+    Camera_.prototype.reset = function() {
+        this.position = [0, 0];
+        this.minY = 0;
+        this.target = [0, 0];
+        this.speedY = 0.5;
+        this.speedX = 0;
+    };
+
+    return new Camera_();
+})();
+
+var enemyParticles = (function() {
+    function Particles() {
+        this.particles = [];
+        this.Particle = (function() {
+            function Particle(config) {
+
+                config = JSON.parse(JSON.stringify(config));
+                this.position = new PVector(config.x, config.y);
+                this.velocity = (function() {
+                    var a = random(0, TWO_PI);
+                    return new PVector(cos(a) * 5, sin(a) * 5);
+                })();
+                this.acceleration = new PVector(0, 0);
+
+                this.gravity = new PVector(0, 1);
+
+                this.angle = config.angle;
+                this.aOffset = config.aOffset;
+
+                this.angularVelocity = 0;
+
+                this.type = config.type;
+
+                this.width = config.width;
+                this.height = config.height;
+
+                this.image = enemies.enemyTypes[this.type].image;
+
+            };
+
+            Particle.prototype.display = function() {
+                pushMatrix();
+                    translate(this.position.x + this.width/2, this.position.y + this.height/2);
+                    rotate(this.angle - this.aOffset);
+                    image(this.image.image, -this.width/2, -this.height/2, this.width, this.height);
+                popMatrix();
+            };
+
+            Particle.prototype.update = function() {
+
+                this.applyForce(this.gravity);
+
+                this.velocity.add(this.acceleration);
+                this.acceleration.mult(0);
+                this.position.add(this.velocity);
+                this.angularVelocity = PVector.div(this.velocity, 4);
+                this.angle += this.angularVelocity;
+            };
+
+            Particle.prototype.applyForce = function(force) {
+                this.acceleration.add(force);
+            };
+
+            Particle.prototype.run = function() {
+                this.update();
+                this.display();
+            };
+
+            return Particle;
+        })();
+
+    }
+
+    Particles.prototype.run = function() {
+        for (var i = this.particles.length - 1; i >= 0; i--) {
+            this.particles[i].run();
+
+            if (this.particles[i].position.y > _camera.position[1] + 700) {
+                this.particles.splice(i, 1);
+            }
+        }
+    };
+
+    Particles.prototype.add = function(config){
+        this.particles.push(new this.Particle(config));
+    };
+
+    return new Particles();
+})();
+
+var transition = (function() {
+    function Transition() {
+        this.to = false;
+        this.from = false;
+        this.frames = 0;
+        this.imgTo = false;
+        this.imgFrom = false;
+        this.messageOfDeath = false;
+
+        this.y = 0;
+    }
+
+    Transition.prototype.reset = function(config) {
+        this.to = config.to;
+        this.from = config.from;
+        this.frames = 0;
+        this.imgTo = scenes[this.to].image;
+        this.imgFrom = scenes[this.from].image;
+
+        if (this.from === "dead") {
+            this.messageOfDeath = vars.message;
+        }
+
+        stars.reset();
+        _camera.reset();
+    };
+
+    Transition.prototype.run = function() {
+
+
+
+        this.frames ++;
+
+        this.y = (2 * this.frames * this.frames);
+        
+        scenes[this.to].func();
+        scene = this.to;
+        if (scene === "shop") {
+            vars.page = 0;
+            vars.maxPages = 1;
+            vars.actualPageX = 0;
+        }
+        
+        buttons.run();
+        scene = "transitionScene";
+        image(this.imgFrom, 0, this.y);
+        if (this.from === "dead") {
+            textFont(MPLUS, 40);
+            textAlign(CENTER);
+            text(this.messageOfDeath, 300, 170 + this.y);
+        }
+        if (this.y > 600) {
+            changeScene(this.to, true, true);
+        }
+    };
+
+    return new Transition();
+})();
+
+var bullets = (function() {
+    var Bullets = function() {
+        this.Bullet = (function() {
+        var Bullet = function(config) {
+            this.position = new PVector(config.x, config.y);
+            this.velocity = new PVector(cos(config.angle) * config.speed, sin(config.angle) * config.speed);
+            this.angle = config.angle;
+            this.r = 5;
+            this.dead = false;
+            this.frames = 0;
+            this.origin = config.origin;
+            this.damage = config.damage;
+        };
+            
+        Bullet.prototype.display = function() {
+            
+            noStroke();
+            
+            var v = this.velocity.get();
+            v.mult(-min(this.frames, 3));
+            fill(255, 100);
+            
+            
+            triangle(
+            this.position.x + v.x, this.position.y + v.y,
+            this.position.x + cos(this.angle + PI/2) * 5, this.position.y + sin(this.angle + PI/2) * 5,
+            this.position.x + cos(this.angle - PI/2) * 5, this.position.y + sin(this.angle - PI/2) * 5
+            );
+            
+            
+            fill(255);
+            ellipse(this.position.x, this.position.y, this.r * 2, this.r * 2);
+        };
+            
+        Bullet.prototype.update = function() {
+
+            this.frames ++;
+            this.position.add(this.velocity);
+
+            if (this.position.x < _camera.position[0] - this.r || this.position.y < _camera.position[1] - this.r || this.position.x > _camera.position[0] + width + this.r || this.position.y > _camera.position[1] + height + this.r) {
+                this.dead = true;
+            }
+
+            if (this.origin !== player && player.sheilding && arcCirc(player.sheild, this)) {
+                this.dead = true;
+                player.sheildSize -= radians(this.damage * 4);
+            }
+
+            if (this.origin !== player && circCirc(this, player)) {
+                this.dead = true;
+                player.health -= this.damage;
+                if (player.health <= 0 && player.health + this.damage > 0) {
+                    player.causeOfDeath = "shot";
+                }
+            }
+
+            
+            for (var i in enemies.enemies) {
+
+                var e = enemies.enemies[i];
+
+                if (this.origin !== e) {
+                    if (rectCirc(e, this)) {
+        
+                        e.health -= this.damage;
+                        if (e.health <= 0 && this.origin === player && !e.dead) {
+                        
+                            player.coins += constrain(round(random(1, player.coinLuck)), 1, player.coinLuck);
+                            e.dead = true;
+                            vars.coinAnim += 3;
+                        }
+                        
+                    }
+                }
+
+            }
+            
+        };
+            
+        Bullet.prototype.run = function() {
+            this.update();
+            this.display();
+        };
+        
+        return Bullet;
+        })();
+        this.bullets = [];
+    };
+    
+    Bullets.prototype.run = function() {
+        for (var i = this.bullets.length - 1; i >= 0; i--) {
+            if (this.bullets[i].dead) {
+                this.bullets.splice([i], 1);
+                continue;
+            }
+            this.bullets[i].run();
+        }
+    };
+    
+    Bullets.prototype.add = function(config) {
+        this.bullets.push(new this.Bullet(config));
+    };
+    
+    return new Bullets();
+})();
+
+var player = (function() {
+    function Player() {
+        
+        this.position = new PVector();
+        this.velocity = new PVector();
+        this.acceleration = new PVector();
+        this.mass = 1;
+        
+        this.angle = 0;
+        this.gravity = 0.15;
+        this.launchForce = 20;
+        this.xMaxVel = 15;
+        this.yMaxVel = 45;
+        this.dragX = 0.985;
+        this.dragY = 0.987;
+        
+        this.r = 25;
+        
+        this.gunSquash = 1;
+        this.gunXSquash = 1;
+        this.gunSide = 1;
+        this.gunRotation = 0;
+        
+        this.startBullets = 5;
+        this.bulletNum = this.startBullets;
+        this.maxBullets = 15;
+        
+        this.maxHealth = 10;
+        this.health = this.maxHealth;
+        this.regen = 0.005;
+        this.damage = 1;
+        
+        this.sheilding = true;
+        this.sheildSize = PI/1.5;
+        this.maxSheildSize = this.sheildSize;
+        this.sheildSW = 10;
+        this.sheildR = this.r/2 + 25;
+        this.sheildRegen = 1;
+        this.sheild = {
+            x: this.position.x,
+            y: this.position.y,
+            start: this.gunRotation - this.sheildSize/2,
+            stop: this.gunRotation + this.sheildSize/2,
+            r: this.sheildR,
+            SW: this.sheildSW,
+        };
+
+        this.coins = 0;
+        this.coinLuck = 1; // chose rand 1 - coinLuck, num coines recieved
+
+        this.causeOfDeath = "fall";
+    }
+    
+    Player.prototype.display = function() { 
+        
+        pushMatrix();
+
+            translate(this.position.x, this.position.y);
+
+            noStroke();
+            fill(colorScheme.playerColor);
+
+            ellipse(0, 0, this.r * 2, this.r * 2);
+
+            stroke(colorScheme.backColor);
+            strokeWeight(5);
+
+            var yOff = this.velocity.y;
+            line(-this.r/4, -this.r/5 + yOff, -this.r/4, this.r/5 + yOff);
+            line(this.r/4, -this.r/5 + yOff, this.r/4, this.r/5 + yOff);
+
+            noFill();
+            stroke(255);
+            strokeWeight(3);
+
+            rect(-25, -45, 50, 13, 3);
+
+            noStroke();
+            fill(lerpColor(color(255, 0, 0), color(0, 255, 0), this.health/this.maxHealth));
+
+            rect(-22.5, -42.5, this.health/this.maxHealth*45, 8, 3);
+            
+            if(!this.sheilding) {
+                rotate(this.gunRotation);
+                scale(this.gunXSquash, this.gunSquash);
+                image(pewPew.img, this.r * 1.2, -pewPew.h/20, pewPew.w/10, pewPew.h/10);
+            } else {
+                stroke(255);
+                noFill();
+                strokeCap(SQUARE);
+                strokeWeight(this.sheild.SW);
+                arc(0, 0, this.sheild.r * 2, this.sheild.r * 2, this.sheild.start, this.sheild.stop);
+            }
+            
+        popMatrix();
+    };
+    
+    Player.prototype.goTo = function(x, y) {
+        this.position.set(x, y);
+    };
+    
+    Player.prototype.reset = function(x, y) {
+        
+        this.goTo(x, y);
+        this.velocity.mult(0);
+        this.acceleration.mult(0);
+        this.bulletNum = this.startBullets;
+        this.angle = 0;
+        this.gunSquash = 1;
+        this.gunXSquash = 1;
+        this.gunSide = 1;
+        this.gunRotation = 0;
+        this.health = this.maxHealth;
+        this.sheildSize = this.maxSheildSize;
+        this.dead = false;
+    };
+    
+    Player.prototype.applyForce = function(force) {
+        var f = PVector.div(force, this.mass);
+        this.acceleration.add(f);
+    };
+    
+    Player.prototype.move = function() {
+        
+        this.velocity.add(this.acceleration);
+        this.acceleration.mult(0);
+        
+        this.velocity.x *= this.dragX;
+        this.velocity.y *= this.dragY;
+        
+        this.velocity.x = constrain(this.velocity.x, -this.xMaxVel, this.xMaxVel);
+        this.velocity.y = constrain(this.velocity.y, -this.yMaxVel, this.yMaxVel);
+        
+        this.position.add(this.velocity.x, this.velocity.y);
+    };
+    
+    Player.prototype.handleGun = function() {
+
+        this.gunRotation = atan2(mouseY + _camera.position[1] - this.position.y, mouseX + _camera.position[0] - this.position.x);
+        this.gunXSquash = lerp(this.gunXSquash, 1, 0.2);
+        
+        if (abs(PI/2 - this.gunRotation) < radians(10)) {
+            this.gunSquash = map(PI/2 - this.gunRotation, radians(-10), radians(10), -1, 1);
+            
+            if (abs(this.gunSquash) < 0.001) {
+                this.gunSquash = 0.1;
+            }
+        } else if (abs(this.gunRotation + PI/2) < radians(10)) {
+            this.gunSquash = map(this.gunRotation + PI/2, radians(-10), radians(10), -1, 1);
+            
+            if (abs(this.gunSquash) < 0.001) {
+                this.gunSquash = 0.1;
+            }
+        } else {
+            if (abs(PI - abs(this.gunRotation)) < PI/2) {
+                this.gunSquash = -1;
+            } else {
+                this.gunSquash = 1;
+            }
+        }
+    };
+    
+    Player.prototype.update = function() {
+
+        if (click && vars.countDown < 1) {
+            this.launch(mouseX + _camera.position[0], mouseY + _camera.position[1]);
+        }
+        
+
+        if (vars.countDown < 1) {
+            this.velocity.y += this.gravity;
+        }
+
+        this.health += this.regen;
+        this.health = constrain(this.health, 0, this.maxHealth);
+        
+        if(keys[LEFT] || keys.A) {
+            this.velocity.x -= 0.05;
+        }
+        if(keys[RIGHT] || keys.D) {
+            this.velocity.x += 0.05;
+        }
+        if(keys.W || rightClickHold) {
+            this.sheilding = true;
+        } else {
+            this.sheilding = false;
+        }
+        
+        if (vars.countDown < 1) {
+            this.move();
+        }
+        
+        
+        if (this.position.x > width + this.r) {
+            this.position.x = -this.r;
+        } else if (this.position.x < -this.r) {
+            this.position.x = width + this.r;
+        }
+        
+        this.handleGun();
+        
+        if (this.bulletNum < this.maxBullets) {
+            this.bulletNum += ammo.playerCollide(player);
+        } else {
+            this.bulletNum = this.maxBullets;
+        }
+
+        this.sheildSize += this.sheildRegen;
+
+        this.sheildSize = constrain(this.sheildSize, 0, this.maxSheildSize);
+
+        this.sheild = {
+            x: player.position.x,
+            y: player.position.y,
+            start: player.gunRotation - this.sheildSize/2,
+            stop: player.gunRotation + this.sheildSize/2,
+            r: player.sheildR,
+            SW: player.sheildSW,
+        };
+    };
+    
+    Player.prototype.run = function() {
+        this.update();
+        this.display();
+        if (this.position.y > _camera.position[1] + 700) {
+            this.dead = true;
+            this.causeOfDeath = "fall";
+        }
+        if (this.health <= 0) {
+            this.dead = true;
+        }
+    };
+    
+    Player.prototype.launch = function(x, y) {
+        if (this.bulletNum > 0 && !this.sheilding) {
+
+            if (!keys[" "]) {
+                this.velocity.mult(0.1);
+                var dir = new PVector(this.position.x - x, this.position.y - y);
+                dir.normalize();
+                dir.mult(this.launchForce);
+                var x = dir.x;
+                var y = dir.y;
+                this.applyForce(new PVector(x, y));
+            }
+
+            this.shoot();
+            this.bulletNum --;
+        }
+    };
+    
+    Player.prototype.shoot = function() {
+        for (var i = 0; i < 8; i ++) {
+            bullets.add({x: this.position.x + cos(this.gunRotation) * this.r * 2, y: this.position.y + sin(this.gunRotation) * this.r*2, angle: this.gunRotation + radians(random(-20, 20)), speed: 20, damage: this.damage, origin: this});
+        }
+        bullets.add({x: this.position.x + cos(this.gunRotation) * this.r*2, y: this.position.y + sin(this.gunRotation) * this.r*2, angle: this.gunRotation, speed: 20, damage: this.damage, origin: this,});
+        this.gunXSquash -= 0.2;
+    };
+    
+    return new Player();
+})();
+
+var enemies = (function() {
+    var Enemies = function() {
+        this.enemyTypes = {
+            hedgeHog: {
+                acuracy: 1,
+                delay: 30,
+                image: hedgeHog,
+                width: 0.15,
+                height: 0.15,
+                damage: 4,
+                health: 4,
+                mutations: [["ufo", 0.1]],
+                aOffset: -PI,
+                liveProb: 0.95,
+                coins: 1,
+            },
+            ufo: {
+                acuracy: 0,
+                delay: 1,
+                image: ufo,
+                width: 0.15,
+                height: 0.15,
+                damage: 0.14,
+                health: 10,
+                mutations: [["ufo", 0.0]],
+                aOffset: PI/2,
+                liveProb: 0.95,
+                coins: 2,
+            },
+        };
+        this.Enemy = (function() {
+            var Enemy = function(config) {
+                var type = enemies.enemyTypes[config.type];
+                this.type = config.type;
+                this.position = new PVector(config.x, config.y);
+                
+                this.image = type.image;
+                this.width = type.width * this.image.width;
+                this.height = type.height * this.image.height;
+                this.acuracy = type.acuracy;
+                this.shotDelay = type.delay;
+                this.startShotDelay = type.delay;
+                this.damage = type.damage;
+                this.angle = 0;
+                
+                this.dead = false;
+                this.health = type.health;
+                this.maxHealth = this.health;
+                this.mutations = type.mutations;
+
+                this.aOffset = type.aOffset;
+
+                this.liveProb = type.liveProb;
+                this.coins = type.coins;
+            };
+            
+            Enemy.prototype.display = function() {
+                noStroke();
+                fill(255);
+                pushMatrix();
+
+                    translate(this.position.x + this.width/2, this.position.y + this.height/2);
+                    rotate(this.angle - this.aOffset);
+
+                    image(this.image.image, -this.width/2, -this.height/2, this.width, this.height);
+
+                    rotate(-(this.angle - this.aOffset));
+
+                    noFill();
+                        stroke(255);
+                        strokeWeight(3);
+
+                        rect(-25, -45, 50, 13, 3);
+
+                        noStroke();
+                        fill(lerpColor(color(255, 0, 0), color(0, 255, 0), this.health/this.maxHealth));
+
+                        rect(-22.5, -42.5, this.health/this.maxHealth*45, 8, 3);
+                        
+                popMatrix();
+            };
+            
+            Enemy.prototype.update = function() {
+                if (vars.countDown < 1) {
+                    this.shotDelay --;
+                }
+                if(this.position.y > _camera.position[1] + width + this.width/2 || this.health <= 0) {
+                    this.dead = true;
+                }
+                this.angle = atan2(player.position.y - (this.position.y + this.height/2) , player.position.x - (this.position.x + this.width/2));
+            };
+            
+            Enemy.prototype.run = function() {
+                this.update();
+                this.display();
+            };
+            
+            Enemy.prototype.shoot = function() {
+                this.shotDelay = this.startShotDelay;
+                var a = atan2(player.position.y - (this.position.y + this.height/2) , player.position.x - (this.position.x + this.width/2));
+                bullets.add({x:this.position.x + this.width/2 + cos(a)*this.width/2, y: this.position.y + this.height/2 + sin(a)*this.height/2, angle: a + random(radians(-this.acuracy), radians(this.acuracy)), speed: 20, damage: this.damage, origin: this,});
+                
+            };
+            return Enemy;
+        })();
+        this.enemies = [];
+    };
+    
+    Enemies.prototype.run = function() {
+        for (var i = this.enemies.length - 1; i >= 0; i --) {
+             if (this.enemies[i].dead) {
+                vars.enemyPoints ++;
+                var e = this.enemies[i];
+
+                enemyParticles.add({
+                    x: e.position.x,
+                    y: e.position.y,
+                    type: e.type,
+                    width: e.width,
+                    height: e.height,
+                    angle: e.angle,
+                    aOffset: e.aOffset,
+                });
+
+                if (e.position.y > _camera.position[1] + width + e.width/2) {
+                    player.health -= e.health;
+                    if (player.health <= 0 && player.health + e.health > 0) {
+                        player.causeOfDeath = "ignore";
+                    }
+                }
+
+                this.enemies.splice(i, 1);
+                
+                var r = floor(random(0, e.mutations.length));
+                if (random() < e.mutations[r][1]) {
+                    this.add({x: random(40, 560), y: _camera.position[1] - random(200, width), type: e.mutations[r][0]});
+                    if (!discoveredEnemies.includes(e.mutations[r][0])) {
+                        discoveredEnemies.push(e.mutations[r][0]);
+                    }
+                    
+                } else {
+                    if (random() <= e.liveProb) {
+                        this.add({x: random(0, width), y: _camera.position[1] - random(200, width), type: e.type});
+                    }
+                }
+            
+                continue;
+            }
+            this.enemies[i].run();
+           
+            if (this.enemies[i].shotDelay < 1 && vars.countDown < 1) {
+                this.enemies[i].shoot();
+            }
+            
+        }
+    };
+    
+    Enemies.prototype.add = function(config) {
+        this.enemies.push(new this.Enemy(config));
+    };
+    
+    Enemies.prototype.spawn = function() {
+        if ((frameCount % 60 === 0 && random() < 0.05) || (this.enemies.length === 0 && random() < 0.01)) {
+            this.add({x:random(40, 560), y: _camera.position[1] - random(200, width), type: discoveredEnemies[floor(random(0, discoveredEnemies.length - 0.01))]});
+        }
+    };
+    
+    Enemies.prototype.remove = function(ind, num) {
+        if (num === undefined) {
+            num = 1;
+        }
+        this.ememys.splice(ind, num);
+    };
+    
+    return new Enemies();
+})();
+
+var buttons = (function() {
+
+    var Buttons = function() {
+
+        this.buttons = [];
+
+        this.Button = (function() {
+
+            var Button = function(config) {
+
+                this.x = config.x;
+                this.y = config.y;
+
+                this.origX = this.x;
+                this.origY = this.y;
+
+                this.width = config.width;
+                this.height = config.height;
+                this.targetWidth = config.targetWidth || this.width + 20;
+                this.origWidth = this.width;
+                this.origHeight = this.height;
+
+                this.rotate = 0;
+                this.targetRotate = config.targetRotate || PI/30;
+                this.origRotate = 0;
+
+                this.textOpacity = config.textOpacity || 200;
+                this.targetTextOpacity = config.targetTextOpacity || 255;
+                this.origTextOpacity = this.textOpacity;
+
+                this.lerpSpeed = 0.2;
+
+                this.strokeColor = config.strokeColor;
+                this.strokeWeight = config.strokeWeight;
+                this.fillColor = config.fillColor;
+                this.text = config.text;
+                this.textColor = config.textColor;
+                this.textFont = config.textFont;
+                this.textSize = config.textSize;
+                this.textYOffset = config.textYOffset || 0;
+                this.onClick = config.onClick;
+                this.radius = config.radius;
+                this.mouseOver = false;
+                this.onHover = config.onHover || false;
+                this.unHover = config.onHover || false;
+
+                this.upgrade = config.upgrade || false;
+
+                this.scene = config.scene;
+                this.displayCondition = config.displayCondition || function() {return true;};
+            };
+
+            Button.prototype.display = function() {
+                pushMatrix();
+
+                    translate(this.x, this.y);
+                    rotate(this.rotate);
+                    if(!this.onHover) {
+                        if (this.mouseOver) {
+
+                            this.width = min(lerp(this.width, this.targetWidth + this.lerpSpeed, this.lerpSpeed), this.targetWidth);
+                            this.rotate = (this.targetRotate !== 0 ? min(lerp(this.rotate, this.targetRotate + this.lerpSpeed, this.lerpSpeed/2), this.targetRotate) : 0);
+                            this.textOpacity = min(lerp(this.textOpacity, this.targetTextOpacity + this.lerpSpeed, this.lerpSpeed), this.targetTextOpacity);
+
+                        } else {
+                            this.width = max(lerp(this.width, this.origWidth - this.lerpSpeed, this.lerpSpeed), this.origWidth);
+                            this.rotate = max(lerp(this.rotate, this.origRotate - this.lerpSpeed, this.lerpSpeed), this.origRotate);
+                            this.textOpacity = max(lerp(this.textOpacity, this.origTextOpacity - this.lerpSpeed, this.lerpSpeed), this.origTextOpacity);
+                        } 
+                    }
+
+                    fill(this.fillColor);
+                    stroke(red(this.strokeColor), green(this.strokeColor), blue(this.strokeColor), this.textOpacity);
+                    strokeWeight(this.strokeWeight);
+                    textSize(this.textSize);
+                    rect(-this.width/2, -this.height/2, this.width, this.height, this.radius);
+                    fill(red(this.textColor), green(this.textColor), blue(this.textColor), this.textOpacity);
+                    textFont(this.textFont, this.textSize);
+                    textAlign(CENTER, CENTER);
+                    if (this.upgrade) {
+                        fill(red(this.upgradeTextColor), green(this.upgradeTextColor), blue(this.upgradeTextColor), this.textOpacity);
+                        text(this.text, 0, this.textYOffset);
+                        fill(colorScheme.backColor);
+                        noStroke();
+                        var w = textWidth(this.text);
+                        rect(-w/2, this.textYOffset - this.textSize, w, this.textSize);
+                        fill(255, this.textOpacity);
+                        var txt = this.text.split("$");
+                        text(txt[0], 0, this.textYOffset);
+
+                    } else {
+                        text(this.text, 0, this.textYOffset);
+                    }
+
+                popMatrix();
+            };
+
+            Button.prototype.update = function() {
+                if (mouseX > this.x - this.width/2 && mouseX < this.x + this.width/2 && mouseY > this.y - this.height/2 && mouseY < this.y + this.height/2) {
+                    this.mouseOver = true;
+                } else {
+                    this.mouseOver = false;
+                    if (this.unHover) {
+                        this.unHover();
+                    }
+                }
+
+                if (this.mouseOver && click) {
+                    this.onClick();
+                } else if (this.mouseOver && this.onHover) {
+                    this.onHover();
+                }
+            };
+
+            Button.prototype.run = function() {
+                if (scene === this.scene && this.displayCondition()) {
+                    this.update();
+                    this.display();
+                }
+            };
+
+            return Button;
+        })();
+    };
+
+    Buttons.prototype.run = function() {
+
+        var hover = undefined;
+
+        for(var i in this.buttons) {
+            this.buttons[i].run();
+            if (this.buttons[i].mouseOver) {
+               hover = i; 
+            }
+        }
+
+        if (hover !== undefined) {
+            var b = this.buttons[hover];
+            this.buttons.splice(hover, 1);
+            this.buttons.push(b);
+        }
+
+    };
+
+    Buttons.prototype.add = function(config) {
+        this.buttons.push(new this.Button(config));
+    }
+
+    return new Buttons();
+})();
+
+var upgrades = (function() {
+    function Upgrades() {
+        this.upgrades = [];
+        this.upgradePos = [[210, 240], [390, 240], [210, 360], [390, 360]];
+        this.Upgrade = (function() {
+            function Upgrade(config) {
+
+                this.name = config.name || "untitled"; // ie health
+
+                this.costs = config.costs || [0]; // cost for each new level
+                this.values = config.values || [0]; // each level has a new value, probably numerical
+
+                this.level = 0;
+                this.maxLevels = this.costs.length;
+
+                this.x = config.x;
+                this.y = config.y;
+
+                var self = this;
+
+                buttons.add({
+                    x: self.x,
+                    y: self.y,
+                    width: config.width,
+                    height: config.height || 70,
+                    scene: "shop",
+                    strokeColor: color(255),
+                    strokeWeight: 5,
+                    fillColor: colorScheme.backColor,
+                    text: self.name + "\n$" + self.costs[self.level],
+                    textColor: color(255),
+                    textFont: SIGNIKA,
+                    textSize: 25,
+                    textYOffset: -4,
+                    targetRotate: PI/60,
+                    targetWidth: config.width + 10,
+                    upgrade: self,
+                    upgradeTextColor: color(255),
+                    displayCondition: function() {
+                        this.x = self.x - vars.actualPageX;
+                        if (self.costs[self.level] > player.coins && this.mouseOver) {
+                            this.upgradeTextColor = color(255, 0, 0);
+                        } else if(this.mouseOver) {
+                            this.upgradeTextColor = color(0, 255, 0);
+                        } else {
+                            this.upgradeTextColor = color(255);
+                        }
+                        return this.x < width + this.width && this.x > -this.width;
+                    },
+                    onClick: function() {
+                        self.levelUp();
+                        this.text = self.name + "\n$" + self.costs[self.level];
+                    },
+                    radius: 5,})
+            }
+
+            Upgrade.prototype.levelUp = function() {
+                if (player.coins >= this.costs[this.level] && this.level < this.costs.length - 1) {
+
+                    player.coins -= this.costs[this.level];
+
+                    
+
+                    switch (this.name) {
+                        case "health":
+
+                            player.maxHealth = this.values[this.level];
+                            break;
+
+                        case "damage":
+
+                            player.damage = this.values[this.level];
+                            break;
+
+                        case "coins":
+
+                            player.coinLuck = this.values[this.level];
+                            break;
+
+                        case "ammo":
+
+                            player.maxBullets = this.values[this.level];
+                            break;
+
+                        case "sheild":
+
+                            player.maxSheildSize = this.values[this.level];
+                            break;
+
+                        case "regen":
+
+                            player.regen = this.values[this.level];
+                            break;
+
+                        default:
+                            println("ERRRAH: upgrade not recognized");
+                    }
+
+                    this.level ++;
+                }
+            };
+
+            return Upgrade;
+        })();
+    }
+
+    Upgrades.prototype.add = function(config) {
+        if (this.upgrades.length < 4) {
+            config.x = this.upgradePos[this.upgrades.length][0];
+            config.y = this.upgradePos[this.upgrades.length][1];
+        } else {
+            config.x = this.upgradePos[this.upgrades.length % 4][0] + width * floor(this.upgrades.length/4);
+            config.y = this.upgradePos[this.upgrades.length % 4][1];
+        }
+        this.upgrades.push(new this.Upgrade(config));
+    };
+
+    return new Upgrades();
+})();
+
+// add upgrades
+(function() {
+    upgrades.add({
+        name: "health",
+        costs:  [10, 20, 35, 55, 80],
+        values: [15, 25, 35, 45, 55],
+        width: 130,
+    });
+
+    upgrades.add({
+        name: "damage",
+        costs:  [5 , 10, 20, 30, 40],
+        values: [2 , 5 ,  9, 14, 20],
+        width: 130, 
+    });
+
+    upgrades.add({
+        name: "coins",
+        costs:  [10, 30, 60, 90, 140],
+        values: [2 , 4 , 6 , 10, 13 ],
+        width: 130,
+    });
+
+    upgrades.add({
+        name: "regen",
+        costs:  [5   ,   15,   30,   45,   65],
+        values: [0.01, 0.02, 0.04, 0.06, 0.08],
+        width: 130,
+    });
+
+    upgrades.add({
+        name: "sheild",
+        costs:  [5 ,     15, 30,     45,     60    ],
+        values: [PI/1.2, PI, PI/0.8, PI/0.7, TWO_PI],
+        width: 130,
+    });})();} // Constructors
+
+{
+// play @ home
+buttons.add({
+    x: 300,
+    y: 290,
+    width: 120,
+    height: 70,
+    scene: "home",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: color(255, 10),
+    text: "Play",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 50,
+    textYOffset: -2.5,
+    onClick: function() {
+        setUp();
+    },
+    radius: 5,});
+
+// shop @ home
+buttons.add({
+    x: 300,
+    y: 390,
+    width: 120,
+    height: 70,
+    scene: "home",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: color(255, 10),
+    text: "Shop",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 50,
+    textYOffset: -2.5,
+    onClick: function() {
+        changeScene("shop");
+    },
+    radius: 5,});
+
+// home @ dead
+buttons.add({
+    x: 466.33,
+    y: 315,
+    width: 130,
+    height: 60,
+    scene: "dead",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: color(255, 10),
+    text: "Home",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 48,
+    textYOffset: -2.5,
+    displayCondition: function() {return vars.anim > 180;},
+    onClick: function() {
+        changeScene("home");
+    },
+    radius: 5,});
+
+// shop @ dead
+buttons.add({
+    x: 466.33,
+    y: 405,
+    width: 130,
+    height: 60,
+    scene: "dead",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: color(255, 10),
+    text: "Shop",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 48,
+    textYOffset: -2.5,
+    displayCondition: function() {return vars.anim > 180;},
+    onClick: function() {
+        changeScene("shop");
+    },
+    radius: 5,});
+
+// play @ dead
+buttons.add({
+    x: 466.33,
+    y: 495,
+    width: 130,
+    height: 60,
+    scene: "dead",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: color(255, 10),
+    text: "Play",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 48,
+    textYOffset: -2.5,
+    displayCondition: function() {return vars.anim > 180;},
+    onClick: function() {
+        setUp();
+    },
+    radius: 5,});
+
+// home @ shop
+buttons.add({
+    x: 150,
+    y: 525,
+    width: 130,
+    height: 50,
+    scene: "shop",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: color(255, 10),
+    text: "Home",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 38,
+    textYOffset: -2.5,
+    onClick: function() {
+        changeScene("home");
+    },
+    radius: 5,});
+
+// left @ shop
+buttons.add({
+    x: 68,
+    y: 300,
+    width: 70,
+    targetWidth: 70,
+    targetRotate: 0.000001,
+    textOpacity: 100,
+    height: 190,
+    scene: "shop",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: colorScheme.backColor,
+    text: "<",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 38,
+    textYOffset: -2.5,
+    displayCondition: function() {
+        return vars.page > 0;
+    },
+    onClick: function() {
+        vars.page --;
+    },
+    radius: 5,});
+
+// right @ shop
+buttons.add({
+    x: 532,
+    y: 300,
+    width: 70,
+    targetWidth: 70,
+    targetRotate: 0.000001,
+    textOpacity: 100,
+    height: 190,
+    scene: "shop",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: colorScheme.backColor,
+    text: ">",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 38,
+    textYOffset: -2.5,
+    displayCondition: function() {
+        return vars.page < vars.maxPages
+    },
+    onClick: function() {
+        vars.page ++;
+    },
+    radius: 5,});
+
+//play @ shop
+buttons.add({
+    x: 450,
+    y: 525,
+    width: 120,
+    height: 50,
+    scene: "shop",
+    strokeColor: color(255),
+    strokeWeight: 5,
+    fillColor: color(255, 10),
+    text: "Play",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 40,
+    textYOffset: -2.5,
+    onClick: function() {
+        setUp();
+    },
+    radius: 5,});} // buttons
+
+{
+
+function displayCoin(playScene) {
+    if (!playScene) {
+        fill(colorScheme.playerColor);
+        textAlign(LEFT, TOP);
+        textFont(MPLUS, 20);
+    }
+
+    text(player.coins, 29, playScene ? 31 : 3);
+    image(coin.image, 5 - (playScene ? (vars.coinAnim || 0) : 0), (playScene ? 32 - (vars.coinAnim || 0) : 6), coin.width/20 + (playScene ? (vars.coinAnim || 0) * 2 : 0), coin.height/20 + (playScene ? (vars.coinAnim || 0) * 2 : 0));
+}
+
+function setUp(par1, par2) {
+    player.reset(width/2, height/2);
+
+    // reset camera
+    _camera.reset();
+
+    // reset stars
+    stars.reset();
+
+    // reset ammo
+    ammo.reset();
+
+    // reset enemies
+    enemies.enemies = [];
+    enemies.add({x:random(0, width), y: random(0, width), type: "hedgeHog"});
+    enemyParticles.particles = [];
+
+    // reset bullets
+    bullets.bullets = [];
+
+    // change scene
+    changeScene("play", par1, par2);
+}} // utility functions part two
+
+{
+function play() {
+
+    if (vars.firstFrame) {
+        vars.firstFrame = false;
+        startTime = Date.now();
+    }
+
+    vars.countDown = 3 - floor((Date.now() - startTime)/1000);
+
+    enemies.spawn();
+
+    vars.coinAnim = lerp(vars.coinAnim, 0, 0.2);
+
+    background(colorScheme.backColor);
+    pushMatrix();
+        
+        translate(-_camera.position[0], -_camera.position[1]);
+
+        stars.run();
+        player.run();
+        ammo.run();
+        bullets.run();
+        enemies.run();
+        enemyParticles.run();
+        
+    popMatrix();
+    fill(colorScheme.playerColor);
+    textAlign(LEFT, TOP);
+    textFont(MPLUS, 20);
+
+    displayCoin(true);
+
+    text(player.bulletNum + "/" + player.maxBullets, 25, 5);
+    image(ammoImg.image, 5, 2, ammoImg.width/20, ammoImg.height/20);
+
+    textAlign(RIGHT, TOP);
+
+    text(((-_camera.position[1] + vars.enemyPoints * 900)/100).toFixed(0) * 100, 590, 5);
+
+    if (vars.countDown > 0) {
+        textAlign(CENTER, CENTER);
+        textSize(75);
+        fill(colorScheme.backColor);
+        text(vars.countDown, 300, 200);
+        textSize(70);
+        fill(colorScheme.playerColor);
+        text(vars.countDown, 300, 200);
+    }
+
+    _camera.run();
+
+    if (player.dead) {
+        changeScene("dead", true, true);
+
+        vars.deadImg = get();
+        
+        var cause = player.causeOfDeath;
+        vars.message = deathMessages[cause][floor(random(0, deathMessages[cause].length - 0.00001))];
+    }
+}
+
+function dead(getingScene) {
+
+    background(0);
+
+    vars.anim = min(lerp(vars.anim, 205, 0.1), 200);
+    if (getingScene) {
+        vars.anim = 200;
+    }
+    
+    pushMatrix();
+
+        //  s = size
+        var s = width - vars.anim * 1.7;
+        var strokeW = 3;
+
+        translate(vars.anim/3, width - vars.anim/3 - s);
+
+        noStroke();
+        fill(255);
+
+        rect(-strokeW, -strokeW, s + strokeW * 2, s + strokeW * 2, 1);
+    
+        image((getingScene ? scenes.play.image : vars.deadImg), 0, 0, s, s);
+
+    popMatrix();
+
+    fill(colorScheme.playerColor);
+    textFont(MPLUS, 50);
+    textAlign(CENTER);
+    text("Ur Ded", 300, 100);
+    textSize(40);
+    text(vars.message, 300, 170);
+
+    displayCoin(false);
+}
+
+function home() {
+    background(colorScheme.backColor);
+    fill(255);
+    textFont(COMIC_MS, 80);
+    textAlign(CENTER, CENTER);
+    text("__TitlE__", 300, 100);
+
+    displayCoin(false);
+}
+
+function shop() {
+
+    background(colorScheme.backColor);
+
+    stars.run();
+
+    var ls = 0.2;
+    vars.actualPageX = lerp(vars.actualPageX, vars.page * width, ls)
+
+    fill(0);
+    stroke(255);
+    strokeWeight(5);
+
+    rect(-5, -5, 610, 153);
+    rect(-5, 450, 610, 500);
+
+    fill(255);
+    textFont(COMIC_MS, 80);
+    textAlign(CENTER, CENTER);
+    text("Shop", 300, 73);
+
+    displayCoin(false);
+}
+
+function transitionScene() {
+    transition.run();
+}
+
+var scenes = {
+    play: {func: play, vars: {coinAnim: 0, enemyPoints: 0, countDown: 3, firstFrame: true, startTime: false,}, image: false,},
+    dead: {func: dead, vars: {deadImg: get(), anim: 0, message: ""}, image: false,},
+    home: {func: home, vars: {}, image: false,},
+    shop: {func: shop, vars: {page: 0, actualPageX: 0, maxPages: floor((upgrades.upgrades.length - 1)/4),}, image: false,},
+    transitionScene: {func: transitionScene, vars: {}, image: false,},
+};
+
+var scenesArr = ["play", "dead", "home", "shop", "transitionScene",];
+
+// get the images for each scene
+(function() {
+function getSceneImg(sceneToGet) {
+
+    if (sceneToGet === "transitionScene") {
+        return;
+    }
+
+
+
+    var startScene = scene;
+
+    if (sceneToGet === "play") {
+        setUp(true, true);
+    } else {
+        changeScene(sceneToGet, true, true);
+    }
+
+    scenes[scene].func(sceneToGet === "dead" ? true: false);
+    buttons.run();
+    scene = startScene;
+    return get();
+}
+
+for (var i = 0; i < scenesArr.length; i++) {
+    scenes[scenesArr[i]].image = getSceneImg(scenesArr[i]);
+}})();
+
+changeScene(scene, true, true);} // scenes
+
+{
+draw = function() {
+    try{
+
+        scenes[scene].func();
+
+        buttons.run();
+
+        click = false;
+        rightClick = false;
+
+    }catch(e){
+        println(e);
+    }
+};} // draw function
+
+{
+keyPressed = function() {
+    keys[keyCode] = keys[key.toString().toUpperCase()] = true;
+};
+
+keyReleased = function() {
+    keys[keyCode] = keys[key.toString().toUpperCase()] = false;
+};
+
+mousePressed = function () {
+    if (mouseButton === LEFT) {
+
+        click = true;
+        clickHold = true;
+    } else if (mouseButton === RIGHT) {
+
+        rightClickHold = true;
+        rightClick = true;
+    }     
+};
+
+mouseReleased = function() {
+    if (mouseButton === RIGHT) {
+        rightClickHold = false;
+    } else if (mouseButton === LEFT) {
+        clickHold = false;
+    }
+};} // user interaction
+
+}
+
+};
+var canvas = document.querySelector("#mycanvas"); 
+var processingInstance = new Processing(canvas, programCode);}
+
+main();
+    </script>
+</html> 
