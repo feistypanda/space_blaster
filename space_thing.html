@@ -34,10 +34,12 @@ with (processingInstance) {
 
 Ideas/TODO
 
+- cookie saver
 - add powerups (ingame like ammo) WIP
 - home screen background
-- another enemy type (maybe split when killed?)
+- another enemy type (maybe wasp w/ poisonous health degrading bullets)
 - bossfight
+x horizontal eyes movement
 x add upgrades (a way to spend coins, seperate page)
 x add enemy dying animation
 x make stars a constructor
@@ -158,8 +160,7 @@ function changeScene(to, changeVars, fromTransition) {
         scene = to;
 
         if (changeVars) {
-            var cloneVar = JSON.parse(JSON.stringify(scenes[scene].vars));
-            vars = cloneVar;
+            vars = JSON.parse(JSON.stringify(scenes[scene].vars));
         }
     }
     
@@ -284,6 +285,124 @@ var ufo = (function() {
     return {image: filling, width: 400, height: 400};
 })();
 
+var wasp = (function(){
+    
+// set up
+background(0, 0);
+noFill();
+stroke(255);
+strokeWeight(16);
+
+// middle
+arc(200, 131, 90, 82, radians(-30), radians(210));
+
+// head
+arc(200, 89, 82, 50, radians(-30), radians(210));
+
+// nose ig
+beginShape();
+var mx = 36;
+var x = 200 - mx, y = 77;
+curveVertex(x, y);
+curveVertex(200, y - 25);
+curveVertex(x, y);
+curveVertex(208, y);
+endShape();
+
+beginShape();
+var x = 200 + mx;
+curveVertex(x, y);
+curveVertex(200, y - 25);
+curveVertex(x, y);
+curveVertex(192, y);
+endShape();
+
+// antenae
+arc(250, 62, 50, 65, radians(180), radians(256));
+arc(150, 62, 50, 65, radians(-76), 0);
+
+//body
+pushMatrix();
+translate(191, 248);
+rotate(radians(-1));
+arc(0, 0, 124, 200, radians(-50), radians(-14));
+arc(-9, 0, 143, 200, radians(-14), radians(41));
+popMatrix();
+
+pushMatrix();
+translate(208, 248);
+rotate(radians(1));
+scale(-1, 1);
+arc(0, 0, 124, 200, radians(-50), radians(-14));
+arc(-9, 0, 143, 200, radians(-14), radians(41));
+popMatrix();
+
+
+// name of this arc = SQUARE + "";
+arc(200, 303, 80, 59, radians(18), radians(162));
+
+// stinger
+strokeWeight(5);
+fill(255);
+
+beginShape();
+    vertex(190, 335);
+    vertex(210, 335);
+    vertex(200, 373);
+endShape(CLOSE);
+
+noFill();
+
+// stripes
+
+strokeWeight(20);
+arc(200, 200, 84, 20, 0, PI);
+arc(200, 245, 102, 20, 0, PI);
+arc(200, 290, 89, 12, 0, PI);
+
+// wiiiings
+
+strokeWeight(14);
+
+// left
+pushMatrix();
+translate(87, 148);
+rotate(radians(159));
+arc(0, 0, 143, 60, 0, PI);
+popMatrix();
+pushMatrix();
+translate(105, 143);
+rotate(radians(-30));
+arc(0, 0, 157, 60, radians(63), radians(119));
+popMatrix();
+pushMatrix();
+translate(40, 271);
+scale(1, -1);
+rotate(radians(-9));
+arc(0, 0, 131, 209, radians(63), radians(119));
+popMatrix();
+
+// right
+pushMatrix();
+translate(200 + (200 - 87), 148);
+rotate(radians(201));
+arc(0, 0, 143, 60, 0, PI);
+popMatrix();
+pushMatrix();
+translate(200 + (200 - 105), 143);
+rotate(radians(34));
+arc(0, 0, 157, 60, radians(63), radians(119));
+popMatrix();
+pushMatrix();
+translate(200 + (200 - 40), 271);
+scale(1, -1);
+rotate(radians(9));
+arc(0, 0, 131, 209, radians(63), radians(119));
+popMatrix();
+
+    return {image: get(0, 0, 400, 400), width: 400, height: 400};
+})();
+
 var coin = (function() {
     background(0);
 
@@ -343,7 +462,7 @@ var ammo = (function() {
                 this.y = y;
             };
             Ammo.prototype.spawn = function() {
-                this.goTo(random(0, 600), _camera.position[1] - 60);
+                this.goTo(random(0, 600), _camera.position[1] - random(60, 400));
             };
             Ammo.prototype.playerCollide = function(player) {
                 var rect = {position: p(this.x, this.y), width: this.width, height: this.height};
@@ -657,7 +776,7 @@ var transition = (function() {
         this.frames ++;
 
         this.y = (2 * this.frames * this.frames);
-        
+        vars = JSON.parse(JSON.stringify(scenes[this.to].vars));
         scenes[this.to].func();
         scene = this.to;
         if (scene === "shop") {
@@ -668,6 +787,7 @@ var transition = (function() {
         
         buttons.run();
         scene = "transitionScene";
+        vars = JSON.parse(JSON.stringify(scenes[scene].vars));
         image(this.imgFrom, 0, this.y);
         if (this.from === "dead") {
             textFont(MPLUS, 40);
@@ -731,8 +851,13 @@ var bullets = (function() {
             }
 
             if (this.origin !== player && circCirc(this, player)) {
+
                 this.dead = true;
+
                 player.health -= this.damage;
+                player.canRegen = false;
+                player.lastTimeHit = Date.now();
+
                 if (player.health <= 0 && player.health + this.damage > 0) {
                     player.causeOfDeath = "shot";
                 }
@@ -819,7 +944,9 @@ var player = (function() {
         this.health = this.maxHealth;
         this.regen = 0.005;
         this.damage = 1;
-        
+        this.lastTimeHit = Date.now();
+        this.canRegen = false;
+
         this.sheilding = true;
         this.sheildSize = PI/1.5;
         this.maxSheildSize = this.sheildSize;
@@ -856,8 +983,10 @@ var player = (function() {
             strokeWeight(5);
 
             var yOff = this.velocity.y;
-            line(-this.r/4, -this.r/5 + yOff, -this.r/4, this.r/5 + yOff);
-            line(this.r/4, -this.r/5 + yOff, this.r/4, this.r/5 + yOff);
+            var xOff = this.velocity.x/2;
+
+            line(-this.r/4 + xOff, -this.r/5 + yOff, -this.r/4 + xOff, this.r/5 + yOff);
+            line(this.r/4 + xOff, -this.r/5 + yOff, this.r/4 + xOff, this.r/5 + yOff);
 
             noFill();
             stroke(255);
@@ -956,12 +1085,18 @@ var player = (function() {
             this.launch(mouseX + _camera.position[0], mouseY + _camera.position[1]);
         }
         
-
         if (vars.countDown < 1) {
             this.velocity.y += this.gravity;
         }
 
-        this.health += this.regen;
+        if (!this.canRegen) {
+            if ((Date.now() - this.lastTimeHit) > 1000) {
+                this.canRegen = 1; // aka true
+            }
+        } else {
+            this.health += this.regen;
+        }
+        
         this.health = constrain(this.health, 0, this.maxHealth);
         
         if(keys[LEFT] || keys.A) {
@@ -1061,7 +1196,7 @@ var enemies = (function() {
                 height: 0.15,
                 damage: 4,
                 health: 4,
-                mutations: [["ufo", 0.1]],
+                mutations: [["ufo", 0.1], ["wasp", 0.03]],
                 aOffset: -PI,
                 liveProb: 0.95,
                 coins: 1,
@@ -1074,7 +1209,20 @@ var enemies = (function() {
                 height: 0.15,
                 damage: 0.14,
                 health: 10,
-                mutations: [["ufo", 0.0]],
+                mutations: [["wasp", 0.2], ["hedgeHog", 0.01]],
+                aOffset: PI/2,
+                liveProb: 0.95,
+                coins: 1,
+            },
+            wasp: {
+                acuracy: 0,
+                delay: 50,
+                image: wasp,
+                width: 0.15,
+                height: 0.15,
+                damage: 5,
+                health: 20,
+                mutations: [["ufo", 0.01]],
                 aOffset: PI/2,
                 liveProb: 0.95,
                 coins: 2,
@@ -1252,6 +1400,13 @@ var buttons = (function() {
                 this.rotate = 0;
                 this.targetRotate = config.targetRotate || PI/30;
                 this.origRotate = 0;
+                this.opositeRot = config.opositeRot;
+
+                if (this.opositeRot) {
+
+                    this.targetRotate *= -1
+
+                };
 
                 this.textOpacity = config.textOpacity || 200;
                 this.targetTextOpacity = config.targetTextOpacity || 255;
@@ -1411,7 +1566,7 @@ var upgrades = (function() {
                     textColor: color(255),
                     textFont: SIGNIKA,
                     textSize: 25,
-                    textYOffset: -4,
+                    textYOffset: -3,
                     targetRotate: PI/60,
                     targetWidth: config.width + 10,
                     upgrade: self,
@@ -1502,36 +1657,36 @@ var upgrades = (function() {
 (function() {
     upgrades.add({
         name: "health",
-        costs:  [10, 20, 35, 55, 80],
-        values: [15, 25, 35, 45, 55],
+        costs:  [10, 15, 20, 35, 55, 80],
+        values: [15, 20, 25, 35, 45, 55],
         width: 130,
     });
 
     upgrades.add({
         name: "damage",
-        costs:  [5 , 10, 20, 30, 40],
-        values: [2 , 5 ,  9, 14, 20],
+        costs:  [5 , 10, 20, 30, 40, 80],
+        values: [2 , 5 ,  9, 14, 20, 50],
         width: 130, 
     });
 
     upgrades.add({
         name: "coins",
-        costs:  [10, 30, 60, 90, 140],
-        values: [2 , 4 , 6 , 10, 13 ],
+        costs:  [10, 20, 30, 60, 90, 140, 200],
+        values: [2 , 3 , 4 , 6 , 10, 13 , 20 ],
         width: 130,
     });
 
     upgrades.add({
         name: "regen",
-        costs:  [5   ,   15,   30,   45,   65],
-        values: [0.01, 0.02, 0.04, 0.06, 0.08],
+        costs:  [5   , 15   , 30  ,   45,   65, 90  , 120],
+        values: [0.01, 0.015, 0.02, 0.04, 0.06, 0.08, 0.1],
         width: 130,
     });
 
     upgrades.add({
         name: "sheild",
         costs:  [5 ,     15, 30,     45,     60    ],
-        values: [PI/1.2, PI, PI/0.8, PI/0.7, TWO_PI],
+        values: [PI/1.2, PI, PI/0.8, PI/0.7, PI/0.6],
         width: 130,
     });})();} // Constructors
 
@@ -1544,7 +1699,7 @@ buttons.add({
     height: 70,
     scene: "home",
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: color(255, 10),
     text: "Play",
     textColor: color(255),
@@ -1564,7 +1719,7 @@ buttons.add({
     height: 70,
     scene: "home",
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: color(255, 10),
     text: "Shop",
     textColor: color(255),
@@ -1584,7 +1739,7 @@ buttons.add({
     height: 60,
     scene: "dead",
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: color(255, 10),
     text: "Home",
     textColor: color(255),
@@ -1604,8 +1759,9 @@ buttons.add({
     width: 130,
     height: 60,
     scene: "dead",
+    opositeRot: true,
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: color(255, 10),
     text: "Shop",
     textColor: color(255),
@@ -1626,7 +1782,7 @@ buttons.add({
     height: 60,
     scene: "dead",
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: color(255, 10),
     text: "Play",
     textColor: color(255),
@@ -1647,7 +1803,7 @@ buttons.add({
     height: 50,
     scene: "shop",
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: color(255, 10),
     text: "Home",
     textColor: color(255),
@@ -1670,7 +1826,7 @@ buttons.add({
     height: 190,
     scene: "shop",
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: colorScheme.backColor,
     text: "<",
     textColor: color(255),
@@ -1696,7 +1852,7 @@ buttons.add({
     height: 190,
     scene: "shop",
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: colorScheme.backColor,
     text: ">",
     textColor: color(255),
@@ -1719,7 +1875,7 @@ buttons.add({
     height: 50,
     scene: "shop",
     strokeColor: color(255),
-    strokeWeight: 5,
+    strokeWeight: 7,
     fillColor: color(255, 10),
     text: "Play",
     textColor: color(255),
