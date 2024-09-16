@@ -9,16 +9,15 @@
 
         <title>A Tab =D</title> 
         <style type="text/css">
+
             
-
-
-
+            
         </style>
     </head>
     <body>
-        
-            <canvas id="mycanvas" align="center"></canvas> 
-        
+        <p align = "center">
+            <canvas id="mycanvas"></canvas> 
+        </p>
     </body>
  
     <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
@@ -37,8 +36,8 @@ Ideas/TODO
 - cookie saver
 - add powerups (ingame like ammo) WIP
 - home screen background
-- another enemy type (maybe wasp w/ poisonous health degrading bullets)
 - bossfight
+x another enemy type (maybe wasp w/ poisonous health degrading bullets)
 x horizontal eyes movement
 x add upgrades (a way to spend coins, seperate page)
 x add enemy dying animation
@@ -163,6 +162,93 @@ function changeScene(to, changeVars, fromTransition) {
 }} // utility functions
 
 {
+
+var homeBackground = (function() {
+    
+    randomSeed(5);
+    background(31, 16, 31);
+
+    fill(255, 15);
+    noStroke();
+    for(var i = 0; i < 30; i ++) {
+
+        var x = random(0, 600);
+        var y = random(0, 600);
+
+        if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
+            ellipse(x, y, 100, 100);
+        }
+    }
+    filter(BLUR, 40);
+    var back = get();
+    
+    var starsImgs = [];
+    for (var j = 2; j < 6; j++) {
+        background(0, 0);
+        
+        for(var i = 0; i < 70/3; i ++) {
+            var x = random(0, 600);
+            var y = random(0, 600);
+            if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
+                fill(random(255, 240), random(255, 230), 200);
+                ellipse(x, y, j, j);
+            }
+        }
+        starsImgs.push(get());
+    }
+    image(back, 0, 0);
+    for (var i in starsImgs) {
+        image(starsImgs[i], 0, 0);
+        filter(BLUR, 1);
+    }
+    filter(BLUR, 1);
+    
+    return get();
+})();
+
+var howBackground = (function() {
+    
+    randomSeed(6);
+    background(31, 16, 31);
+
+    fill(255, 15);
+    noStroke();
+    for(var i = 0; i < 30; i ++) {
+
+        var x = random(0, 600);
+        var y = random(0, 600);
+
+        if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
+            ellipse(x, y, 100, 100);
+        }
+    }
+    filter(BLUR, 40);
+    var back = get();
+    
+    var starsImgs = [];
+    for (var j = 2; j < 6; j++) {
+        background(0, 0);
+        
+        for(var i = 0; i < 70/3; i ++) {
+            var x = random(0, 600);
+            var y = random(0, 600);
+            if (!(x > 70 && x < 530 && y > 70 && y < 130) && !(x > 30 && x < 570 && y > 200 && y < 400) && !(x > 80 && x < 220 && y > 500 && y < 570) && !(x > 380 && x < 520 && y > 500 && y < 570)) {
+                fill(random(255, 240), random(255, 230), 200);
+                ellipse(x, y, j, j);
+            }
+        }
+        starsImgs.push(get());
+    }
+    image(back, 0, 0);
+    for (var i in starsImgs) {
+        image(starsImgs[i], 0, 0);
+        filter(BLUR, 1);
+    }
+    filter(BLUR, 1);
+    
+    return get();
+})();
+
 var pewPew = (function() {
     background(0);
     pushMatrix();
@@ -427,7 +513,7 @@ var coin = (function() {
     }
 
     return {image: filling, width: 400, height: 400};
-})();} // Images
+})();} // images
 
 {
 var player, enemies, bullets, ammo, stars, _camera, enemyParticles, powerUps;
@@ -594,15 +680,16 @@ var stars = (function() {
     }
 
     Stars.prototype.generate = function(initial_star) {
-        return [random(0, width), random(_camera.position[1] - 5, initial_star? _camera.position[1] + 600 :  _camera.position[1] - 5), random(0, 5)];
+        return [random(0, width), random(_camera.position[1] - 5, initial_star? 600 :  _camera.position[1] - 5), random(0, 5)];
     }
 
-    Stars.prototype.reset = function() {
+    Stars.prototype.reset = function(seed) {
         var a = [];
+
         for (var i = 0; i < this.count; i ++) {
             a.push(this.generate(true));
         }
-        this.stars = a;
+        this.stars = a;      
     }
 
     Stars.prototype.run = function() {
@@ -620,6 +707,7 @@ var stars = (function() {
                 this.stars[i] = this.generate();
             }
         }
+        
     };
 
     return new Stars();
@@ -975,7 +1063,7 @@ var player = (function() {
         this.bulletNum = this.startBullets;
         this.maxBullets = 15;
         
-        this.maxHealth = 10;
+        this.maxHealth = 8;
         this.health = this.maxHealth;
         this.regen = 0.005;
         this.damage = 1;
@@ -1240,22 +1328,22 @@ var enemies = (function() {
                 image: hedgeHog,
                 width: 0.15,
                 height: 0.15,
-                damage: 4,
+                damage: 2,
                 health: 4,
-                mutations: [["ufo", 0.1]],
+                mutations: [["ufo", 0.03]],
                 aOffset: -PI,
                 liveProb: 0.95,
                 coins: 1,
             },
             ufo: {
                 acuracy: 0,
-                delay: 1,
+                delay: 3,
                 image: ufo,
                 width: 0.15,
                 height: 0.15,
-                damage: 0.14,
+                damage: 0.1,
                 health: 10,
-                mutations: [["wasp", 0.2], ["hedgeHog", 0.01]],
+                mutations: [["wasp", 0.06], ["hedgeHog", 0.005]],
                 aOffset: PI/2,
                 liveProb: 0.95,
                 coins: 1,
@@ -1273,7 +1361,7 @@ var enemies = (function() {
                 liveProb: 0.95,
                 coins: 2,
                 poisonDuration: 240,
-                poisonIntensity: 0.02,
+                poisonIntensity: 0.01,
                 bulletType: "venom",
             },
         };
@@ -1372,7 +1460,8 @@ var enemies = (function() {
     
     Enemies.prototype.run = function() {
         for (var i = this.enemies.length - 1; i >= 0; i --) {
-             if (this.enemies[i].dead) {
+
+            if (this.enemies[i].dead) {
                 vars.enemyPoints ++;
                 var e = this.enemies[i];
 
@@ -1387,8 +1476,8 @@ var enemies = (function() {
                 });
 
                 if (e.position.y > _camera.position[1] + width + e.width/2) {
-                    player.health -= e.health;
-                    if (player.health <= 0 && player.health + e.health > 0) {
+                    player.health -= e.health/2;
+                    if (player.health <= 0 && player.health + e.health/2 > 0) {
                         player.causeOfDeath = "ignore";
                     }
                 }
@@ -1399,13 +1488,14 @@ var enemies = (function() {
                 if (random() < e.mutations[r][1]) {
                     
                     this.add({x: random(40, 560), y: _camera.position[1] - random(200, width), type: e.mutations[r][0]});
+                    // println("mutate");
                     if (!discoveredEnemies.includes(e.mutations[r][0])) {
                         discoveredEnemies.push(e.mutations[r][0]);
                     }
                     
                 } else {
                     if (random() <= e.liveProb) {
-                        
+                        // println("live");
                         this.add({x: random(40, width - 40), y: _camera.position[1] - random(200, width), type: e.type});
                     }
                 }
@@ -1426,7 +1516,8 @@ var enemies = (function() {
     };
     
     Enemies.prototype.spawn = function() {
-        if ((frameCount % 60 === 0 && random() < 0.05)) {
+        if ((frameCount % 120 === 0 && random() < 0.02)) {
+            // println("spawn");
             this.add({x:random(40, 560), y: _camera.position[1] - random(200, width), type: discoveredEnemies[floor(random(0, discoveredEnemies.length - 0.01))]});
         } else if(this.enemies.length === 0 && random() < 0.01) {
             this.add({x:random(40, 560), y: _camera.position[1] - random(200, width), type: discoveredEnemies[floor(random(0, discoveredEnemies.length - 0.01))]});
@@ -1468,7 +1559,7 @@ var buttons = (function() {
                 this.origHeight = this.height;
 
                 this.rotate = 0;
-                this.targetRotate = config.targetRotate || PI/30;
+                this.targetRotate = config.targetRotate || PI/60;
                 this.origRotate = 0;
                 this.opositeRot = config.opositeRot;
 
@@ -1727,8 +1818,8 @@ var upgrades = (function() {
 (function() {
     upgrades.add({
         name: "health",
-        costs:  [10, 15, 20, 35, 55, 80],
-        values: [15, 20, 25, 35, 45, 55],
+        costs:  [2 , 5, 10, 20, 35, 55, 80],
+        values: [11, 15, 20, 25, 35, 45, 55],
         width: 130,
     });
 
@@ -1741,15 +1832,15 @@ var upgrades = (function() {
 
     upgrades.add({
         name: "coins",
-        costs:  [10, 20, 30, 60, 90, 140, 200],
+        costs:  [5, 15, 25, 50, 80, 130, 200],
         values: [2 , 3 , 4 , 6 , 10, 13 , 20 ],
         width: 130,
     });
 
     upgrades.add({
         name: "regen",
-        costs:  [5   , 15   , 30  ,   45,   65, 90  , 120],
-        values: [0.01, 0.015, 0.02, 0.04, 0.06, 0.08, 0.1],
+        costs:  [2    , 5   , 15   , 30  ,   45,   65, 90  , 120],
+        values: [0.01, 0.02, 0.025, 0.04, 0.05, 0.06, 0.08, 0.1],
         width: 130,
     });
 
@@ -1758,14 +1849,14 @@ var upgrades = (function() {
         costs:  [5 ,     15, 30,     45,     60    ],
         values: [PI/1.2, PI, PI/0.8, PI/0.7, PI/0.6],
         width: 130,
-    });})();} // Constructors
+    });})();} // constructors
 
 {
 // play @ home
 buttons.add({
     x: 300,
     y: 290,
-    width: 120,
+    width: 180,
     height: 70,
     scene: "home",
     strokeColor: color(255),
@@ -1785,8 +1876,9 @@ buttons.add({
 buttons.add({
     x: 300,
     y: 390,
-    width: 120,
+    width: 180,
     height: 70,
+    opositeRot: true,
     scene: "home",
     strokeColor: color(255),
     strokeWeight: 7,
@@ -1798,6 +1890,26 @@ buttons.add({
     textYOffset: -2.5,
     onClick: function() {
         changeScene("shop");
+    },
+    radius: 5,});
+
+// how @ home
+buttons.add({
+    x: 300,
+    y: 490,
+    width: 180,
+    height: 70,
+    scene: "home",
+    strokeColor: color(255),
+    strokeWeight: 7,
+    fillColor: color(255, 10),
+    text: "How",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 50,
+    textYOffset: -2.5,
+    onClick: function() {
+        changeScene("how");
     },
     radius: 5,});
 
@@ -1882,6 +1994,46 @@ buttons.add({
     textYOffset: -2.5,
     onClick: function() {
         changeScene("home");
+    },
+    radius: 5,});
+
+// home @ how
+buttons.add({
+    x: 150,
+    y: 525,
+    width: 130,
+    height: 50,
+    scene: "how",
+    strokeColor: color(255),
+    strokeWeight: 7,
+    fillColor: color(255, 10),
+    text: "Home",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 38,
+    textYOffset: -2.5,
+    onClick: function() {
+        changeScene("home");
+    },
+    radius: 5,});
+
+// play @ how
+buttons.add({
+    x: 450,
+    y: 525,
+    width: 120,
+    height: 50,
+    scene: "how",
+    strokeColor: color(255),
+    strokeWeight: 7,
+    fillColor: color(255, 10),
+    text: "Play",
+    textColor: color(255),
+    textFont: SIGNIKA,
+    textSize: 40,
+    textYOffset: -2.5,
+    onClick: function() {
+        setUp();
     },
     radius: 5,});
 
@@ -2054,6 +2206,7 @@ function play() {
         
         var cause = player.causeOfDeath;
         vars.message = deathMessages[cause][floor(random(0, deathMessages[cause].length - 0.00001))];
+       
     }
 }
 
@@ -2094,19 +2247,24 @@ function dead(getingScene) {
 }
 
 function home() {
-    background(colorScheme.backColor);
+    image(homeBackground, 0, 0);
     fill(255);
     textFont(COMIC_MS, 80);
     textAlign(CENTER, CENTER);
-    text("__TitlE__", 300, 100);
-
-    displayCoin(false);
+    text("__Title__", 300, 100);
 }
 
 function shop() {
 
     background(colorScheme.backColor);
 
+    if (vars.firstFrame) {
+        randomSeed(0);
+        stars.reset();
+        vars.firstFrame *= 0;
+        randomSeed(r);
+    }
+    
     stars.run();
 
     var ls = 0.2;
@@ -2127,6 +2285,20 @@ function shop() {
     displayCoin(false);
 }
 
+function how() {
+    image(howBackground, 0, 0);
+
+    textFont(ROWDIES, 40);
+    fill(255);
+
+    text("Shoot to move, press [W] \nto hold your sheild, and use\n[A] and [D] for directional\nthrusters", 300, 300);
+
+    textFont(ROWDIES, 60);
+
+    text("INSTRUCTIONS", 300, 100);
+
+}
+
 function transitionScene() {
     transition.run();
 }
@@ -2135,11 +2307,12 @@ var scenes = {
     play: {func: play, vars: {coinAnim: 0, enemyPoints: 0, countDown: 3, firstFrame: true, startTime: false,}, image: false,},
     dead: {func: dead, vars: {deadImg: get(), anim: 0, message: ""}, image: false,},
     home: {func: home, vars: {}, image: false,},
-    shop: {func: shop, vars: {page: 0, actualPageX: 0, maxPages: floor((upgrades.upgrades.length - 1)/4),}, image: false,},
+    shop: {func: shop, vars: {page: 0, actualPageX: 0, maxPages: floor((upgrades.upgrades.length - 1)/4), firstFrame: true,}, image: false,},
+    how: {func: how, vars: {}, image: false,},
     transitionScene: {func: transitionScene, vars: {}, image: false,},
 };
 
-var scenesArr = ["play", "dead", "home", "shop", "transitionScene",];
+var scenesArr = ["play", "dead", "home", "shop", "transitionScene", "how"];
 
 // get the images for each scene
 (function() {
@@ -2159,7 +2332,7 @@ function getSceneImg(sceneToGet) {
         changeScene(sceneToGet, true, true);
     }
 
-    scenes[scene].func(sceneToGet === "dead" ? true: false);
+    scenes[scene].func(sceneToGet === "dead" ? true : false);
     buttons.run();
     scene = startScene;
     return get();
