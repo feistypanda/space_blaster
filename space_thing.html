@@ -163,6 +163,69 @@ function changeScene(to, changeVars, fromTransition) {
 
 {
 
+var thrusterImgs = (function() {
+    
+    var thrusterImgs = [];
+    var base = (function() {
+        background(0, 0);
+        fill(255);
+        stroke(255);
+        noStroke();
+        
+        beginShape();
+        vertex(15, 10);
+        vertex(80, 10);
+        vertex(191, 24);
+        vertex(210, 40);
+        vertex(210, 60);
+        vertex(200, 70);
+        vertex(200, 180);
+        vertex(210, 190);
+        vertex(210, 210);
+        vertex(191, 226);
+        vertex(80, 240);
+        vertex(15, 240);
+        vertex(13, 235);
+        vertex(15, 210);
+        vertex(20, 150);
+        vertex(20, 100);
+        vertex(15, 40);
+        vertex(13, 15);
+        endShape(CLOSE);
+        return get();
+    })();
+    
+    var drawThruster = function() {
+        
+        background(0, 0);
+        image(base, 0, 0);
+        
+        beginShape();
+        vertex(210 + random(0, 5), 70);
+        vertex(210 + random(0, 5), 180);
+        vertex(350 + random(-5, 5), 140 + random(-5, 5));
+        vertex(320 + random(-5, 5), 127 + random(-5, 5));
+        vertex(350 + random(-5, 5), 115 + random(-5, 5));
+        endShape(CLOSE);
+    };
+    
+    for (var i = 0; i < 50; i ++) {
+        background(0, 0);
+        image(base, 0, 0);
+        
+        beginShape();
+        vertex(210 + random(0, 5), 70);
+        vertex(210 + random(0, 5), 180);
+        vertex(350 + random(-5, 5), 140 + random(-5, 5));
+        vertex(320 + random(-5, 5), 127 + random(-5, 5));
+        vertex(350 + random(-5, 5), 115 + random(-5, 5));
+        endShape(CLOSE);
+        thrusterImgs.push(get());
+    }
+    
+    return {imgs: thrusterImgs, width: 400, height: 250};
+})();
+
 var homeBackground = (function() {
     
     randomSeed(5);
@@ -1092,6 +1155,9 @@ var player = (function() {
         this.coinLuck = 1; // chose rand 1 - coinLuck, num coines recieved
 
         this.causeOfDeath = "fall";
+
+        this.thrusterLeft = false;
+        this.thrusterRight = false;
     }
     
     Player.prototype.display = function() { 
@@ -1138,6 +1204,41 @@ var player = (function() {
             }
             
         popMatrix();
+
+        pushMatrix();
+
+            translate(this.position.x, this.position.y);
+
+            if (this.thrusterLeft) {
+
+                var w = thrusterImgs.width/10;
+                var h = thrusterImgs.height/10;
+
+                pushMatrix();
+                rotate(-PI/10);
+                translate(w/2, 0);
+                scale(-1, 1);
+
+                image(thrusterImgs.imgs[frameCount%50], w, -h/4, w, h);
+                popMatrix();
+            }
+
+            if (this.thrusterRight) {
+
+                var w = thrusterImgs.width/10;
+                var h = thrusterImgs.height/10;
+
+                pushMatrix();
+                rotate(PI/10);
+                translate(w/2, 0);
+                scale(1, 1);
+                
+                image(thrusterImgs.imgs[frameCount%50], 0, -h/4, w, h);
+                popMatrix();
+            }
+
+        popMatrix();
+
     };
     
     Player.prototype.goTo = function(x, y) {
@@ -1233,13 +1334,18 @@ var player = (function() {
         
         this.health = constrain(this.health, 0, this.maxHealth);
         
+        this.thrusterRight = false;
+        this.thrusterLeft = false;
+
         if(keys[LEFT] || keys.A) {
             this.velocity.x -= 0.05;
+            this.thrusterRight = true;
         }
         if(keys[RIGHT] || keys.D) {
             this.velocity.x += 0.05;
+            this.thrusterLeft = true;
         }
-        if(keys.W || rightClickHold) {
+        if(keys[UP] || keys.W) {
             this.sheilding = true;
         } else {
             this.sheilding = false;
@@ -1293,15 +1399,13 @@ var player = (function() {
     Player.prototype.launch = function(x, y) {
         if (this.bulletNum > 0 && !this.sheilding) {
 
-            if (!keys[" "]) {
-                this.velocity.mult(0.1);
-                var dir = new PVector(this.position.x - x, this.position.y - y);
-                dir.normalize();
-                dir.mult(this.launchForce);
-                var x = dir.x;
-                var y = dir.y;
-                this.applyForce(new PVector(x, y));
-            }
+            this.velocity.mult(0.1);
+            var dir = new PVector(this.position.x - x, this.position.y - y);
+            dir.normalize();
+            dir.mult(this.launchForce);
+            var x = dir.x;
+            var y = dir.y;
+            this.applyForce(new PVector(x, y));
 
             this.shoot();
             this.bulletNum --;
@@ -2237,7 +2341,7 @@ function dead(getingScene) {
     popMatrix();
 
     fill(colorScheme.playerColor);
-    textFont(MPLUS, 50);
+    textFont(ROWDIES, 50);
     textAlign(CENTER);
     text("Ur Ded", 300, 100);
     textSize(40);
@@ -2249,9 +2353,11 @@ function dead(getingScene) {
 function home() {
     image(homeBackground, 0, 0);
     fill(255);
-    textFont(COMIC_MS, 80);
+    textFont(ROWDIES, 90);
     textAlign(CENTER, CENTER);
-    text("__Title__", 300, 100);
+    text("-SPACE-", 300, 100);
+    textFont(ROWDIES, 50);
+    text("-BLASTER-", 300, 170);
 }
 
 function shop() {
@@ -2291,7 +2397,7 @@ function how() {
     textFont(ROWDIES, 40);
     fill(255);
 
-    text("Shoot to move, press [W] \nto hold your sheild, and use\n[A] and [D] for directional\nthrusters", 300, 300);
+    text("Shoot to move, press [W] \nto hold your sheild, and use\n[A] and [D] for directional\nthrusters. Go to the shop\nto buy upgrades!", 300, 300);
 
     textFont(ROWDIES, 60);
 
