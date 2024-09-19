@@ -83,6 +83,9 @@ var rightClick,
     click,
     clickHold;
 
+var shake = [0, 0];
+var shakeTime = 0;
+
 var vars;
 
 var deathMessages = {
@@ -1413,6 +1416,7 @@ var player = (function() {
     };
     
     Player.prototype.shoot = function() {
+        shakeTime = 10;
         for (var i = 0; i < 8; i ++) {
             bullets.add({x: this.position.x + cos(this.gunRotation) * this.r * 2, y: this.position.y + sin(this.gunRotation) * this.r*2, angle: this.gunRotation + radians(random(-20, 20)), speed: 20, damage: this.damage, origin: this});
         }
@@ -2454,9 +2458,23 @@ changeScene(scene, true, true);} // scenes
 draw = function() {
     try{
 
+        if (shakeTime > 1) {
+            var s = shakeTime/2;
+            shake = [random(-s, s), random(-s, s)];
+            shakeTime --;
+        } else { 
+            shakeTime = 0;
+            
+        }
+        
+        pushMatrix();
+        translate(shake[0], shake[1]);
+
         scenes[scene].func();
 
         buttons.run();
+
+        popMatrix();
 
         click = false;
         rightClick = false;
