@@ -157,6 +157,12 @@ function changeScene(to, changeVars, fromTransition) {
     } else {
         scene = to;
 
+        if (to === "play") {
+            cursor("crossHair");
+        } else {
+            cursor("default");
+        }
+
         if (changeVars) {
             vars = clone(scenes[scene].vars);
         }
@@ -1545,6 +1551,7 @@ var enemies = (function() {
             };
             
             Enemy.prototype.shoot = function() {
+                shakeTime = 5;
                 this.shotDelay = this.startShotDelay;
                 var a = atan2(player.position.y - (this.position.y + this.height/2) , player.position.x - (this.position.x + this.width/2));
                 bullets.add(
@@ -1612,7 +1619,7 @@ var enemies = (function() {
             }
             this.enemies[i].run();
            
-            if (this.enemies[i].shotDelay < 1 && vars.countDown < 1) {
+            if (this.enemies[i].shotDelay < 1 && vars.countDown < 1 && this.enemies[i].position.y > _camera.position[1] && this.enemies[i].position.y < _camera.position[1] + 550) {
                 this.enemies[i].shoot();
             }
             
@@ -1624,7 +1631,7 @@ var enemies = (function() {
     };
     
     Enemies.prototype.spawn = function() {
-        if ((frameCount % 120 === 0 && random() < 0.02)) {
+        if ((frameCount % 90 === 0 && random() < 0.05)) {
             // println("spawn");
             this.add({x:random(40, 560), y: _camera.position[1] - random(200, width), type: discoveredEnemies[floor(random(0, discoveredEnemies.length - 0.01))]});
         } else if(this.enemies.length === 0 && random() < 0.01) {
@@ -2226,8 +2233,8 @@ function displayCoin(playScene) {
         textFont(MPLUS, 20);
     }
 
-    text(player.coins, 29, playScene ? 31 : 3);
-    image(coin.image, 5 - (playScene ? (vars.coinAnim || 0) : 0), (playScene ? 32 - (vars.coinAnim || 0) : 6), coin.width/20 + (playScene ? (vars.coinAnim || 0) * 2 : 0), coin.height/20 + (playScene ? (vars.coinAnim || 0) * 2 : 0));
+    text(player.coins, 29, playScene ? 37 : 3);
+    image(coin.image, 5 - (playScene ? (vars.coinAnim || 0) : 0), (playScene ? 42 - (vars.coinAnim || 0) : 6), coin.width/20 + (playScene ? (vars.coinAnim || 0) * 2.5 : 0), coin.height/20 + (playScene ? (vars.coinAnim || 0) * 2.5 : 0));
 }
 
 function setUp(par1, par2) {
@@ -2282,14 +2289,17 @@ function play() {
         enemyParticles.run();
         
     popMatrix();
-    fill(colorScheme.playerColor);
+    fill(255);
     textAlign(LEFT, TOP);
-    textFont(MPLUS, 20);
+    textFont(MPLUS, 26);
 
     displayCoin(true);
 
-    text(player.bulletNum + "/" + player.maxBullets, 25, 5);
-    image(ammoImg.image, 5, 2, ammoImg.width/20, ammoImg.height/20);
+    fill(player.bulletNum? colorScheme.playerColor: color(255, 0, 0));
+
+    text(player.bulletNum + "/" + player.maxBullets, 35, 5);
+    image(ammoImg.image, 5, 2, ammoImg.width/15, ammoImg.height/15);
+    fill(255);
 
     textAlign(RIGHT, TOP);
 
