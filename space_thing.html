@@ -22,7 +22,7 @@
  
     <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
 
-    <script>
+    <script type>
 
 function main() {
 
@@ -47,7 +47,6 @@ x put spawnenemy into constructor
 x transition (between scenes)
 
 *****/
-
 {
 size(600, 600);
  
@@ -73,7 +72,7 @@ var colorScheme = {
 };
 
 var keys = {};
-var scene = "home";
+var scene = "loading";
 var scenes;
 var deathImage;
 
@@ -82,9 +81,6 @@ var rightClick,
     rightClickHold,
     click,
     clickHold;
-
-var shake = [0, 0];
-var shakeTime = 0;
 
 var vars;
 
@@ -157,12 +153,6 @@ function changeScene(to, changeVars, fromTransition) {
     } else {
         scene = to;
 
-        if (to === "play") {
-            cursor("crossHair");
-        } else {
-            cursor("default");
-        }
-
         if (changeVars) {
             vars = clone(scenes[scene].vars);
         }
@@ -172,156 +162,8 @@ function changeScene(to, changeVars, fromTransition) {
 
 {
 
-var thrusterImgs = (function() {
-    
-    var thrusterImgs = [];
-    var base = (function() {
-        background(0, 0);
-        fill(255);
-        stroke(255);
-        noStroke();
-        
-        beginShape();
-        vertex(15, 10);
-        vertex(80, 10);
-        vertex(191, 24);
-        vertex(210, 40);
-        vertex(210, 60);
-        vertex(200, 70);
-        vertex(200, 180);
-        vertex(210, 190);
-        vertex(210, 210);
-        vertex(191, 226);
-        vertex(80, 240);
-        vertex(15, 240);
-        vertex(13, 235);
-        vertex(15, 210);
-        vertex(20, 150);
-        vertex(20, 100);
-        vertex(15, 40);
-        vertex(13, 15);
-        endShape(CLOSE);
-        return get();
-    })();
-    
-    var drawThruster = function() {
-        
-        background(0, 0);
-        image(base, 0, 0);
-        
-        beginShape();
-        vertex(210 + random(0, 5), 70);
-        vertex(210 + random(0, 5), 180);
-        vertex(350 + random(-5, 5), 140 + random(-5, 5));
-        vertex(320 + random(-5, 5), 127 + random(-5, 5));
-        vertex(350 + random(-5, 5), 115 + random(-5, 5));
-        endShape(CLOSE);
-    };
-    
-    for (var i = 0; i < 50; i ++) {
-        background(0, 0);
-        image(base, 0, 0);
-        
-        beginShape();
-        vertex(210 + random(0, 5), 70);
-        vertex(210 + random(0, 5), 180);
-        vertex(350 + random(-5, 5), 140 + random(-5, 5));
-        vertex(320 + random(-5, 5), 127 + random(-5, 5));
-        vertex(350 + random(-5, 5), 115 + random(-5, 5));
-        endShape(CLOSE);
-        thrusterImgs.push(get());
-    }
-    
-    return {imgs: thrusterImgs, width: 400, height: 250};
-})();
-
-var homeBackground = (function() {
-    
-    randomSeed(5);
-    background(31, 16, 31);
-
-    fill(255, 15);
-    noStroke();
-    for(var i = 0; i < 30; i ++) {
-
-        var x = random(0, 600);
-        var y = random(0, 600);
-
-        if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
-            ellipse(x, y, 100, 100);
-        }
-    }
-    filter(BLUR, 40);
-    var back = get();
-    
-    var starsImgs = [];
-    for (var j = 2; j < 6; j++) {
-        background(0, 0);
-        
-        for(var i = 0; i < 70/3; i ++) {
-            var x = random(0, 600);
-            var y = random(0, 600);
-            if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
-                fill(random(255, 240), random(255, 230), 200);
-                ellipse(x, y, j, j);
-            }
-        }
-        starsImgs.push(get());
-    }
-    image(back, 0, 0);
-    for (var i in starsImgs) {
-        image(starsImgs[i], 0, 0);
-        filter(BLUR, 1);
-    }
-    filter(BLUR, 1);
-    
-    return get();
-})();
-
-var howBackground = (function() {
-    
-    randomSeed(6);
-    background(31, 16, 31);
-
-    fill(255, 15);
-    noStroke();
-    for(var i = 0; i < 30; i ++) {
-
-        var x = random(0, 600);
-        var y = random(0, 600);
-
-        if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
-            ellipse(x, y, 100, 100);
-        }
-    }
-    filter(BLUR, 40);
-    var back = get();
-    
-    var starsImgs = [];
-    for (var j = 2; j < 6; j++) {
-        background(0, 0);
-        
-        for(var i = 0; i < 70/3; i ++) {
-            var x = random(0, 600);
-            var y = random(0, 600);
-            if (!(x > 70 && x < 530 && y > 70 && y < 130) && !(x > 30 && x < 570 && y > 200 && y < 400) && !(x > 80 && x < 220 && y > 500 && y < 570) && !(x > 380 && x < 520 && y > 500 && y < 570)) {
-                fill(random(255, 240), random(255, 230), 200);
-                ellipse(x, y, j, j);
-            }
-        }
-        starsImgs.push(get());
-    }
-    image(back, 0, 0);
-    for (var i in starsImgs) {
-        image(starsImgs[i], 0, 0);
-        filter(BLUR, 1);
-    }
-    filter(BLUR, 1);
-    
-    return get();
-})();
-
-var pewPew = (function() {
+var images = {
+    pewPew: function() {
     background(0);
     pushMatrix();
     translate(342, 57);
@@ -358,10 +200,94 @@ var pewPew = (function() {
     if (filling) {
         filling.mask(msk);
     }
-    return {img: filling, w: 341, h: 184};
-})();
+    return {img: filling, w: 341, h: 184};},
+    homeBackground: function() {
 
-var ammoImg = (function() {
+    var g = createGraphics(600, 600, P2D);
+
+    randomSeed(5);
+    g.background(31, 16, 31);
+
+    g.fill(255, 15);
+    g.noStroke();
+    for(var i = 0; i < 30; i ++) {
+
+        var x = random(0, 600);
+        var y = random(0, 600);
+
+        if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
+            g.ellipse(x, y, 100, 100);
+        }
+    }
+    g.filter(BLUR, 40);
+    var back = g.get();
+    
+    var starsImgs = [];
+    for (var j = 2; j < 6; j++) {
+        background(0, 0);
+        
+        for(var i = 0; i < 70/3; i ++) {
+            var x = random(0, 600);
+            var y = random(0, 600);
+            if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
+                g.fill(random(255, 240), random(255, 230), 200);
+                g.ellipse(x, y, j, j);
+            }
+        }
+        starsImgs.push(g.get());
+    }
+    g.image(back, 0, 0);
+    for (var i in starsImgs) {
+        g.image(starsImgs[i], 0, 0);
+        g.filter(BLUR, 1);
+    }
+    g.filter(BLUR, 1);
+    
+    return g;},
+    howBackground: function() {
+
+    var g = createGraphics(600, 600, P2D);
+
+    randomSeed(5);
+    g.background(31, 16, 31);
+
+    g.fill(255, 15);
+    g.noStroke();
+    for(var i = 0; i < 30; i ++) {
+
+        var x = random(0, 600);
+        var y = random(0, 600);
+
+        if (!(x > 100 && x < 500 && y > 20 && y < 200) && !(x > 200 && x < 400 && y > 250 && y < 550)) {
+            g.ellipse(x, y, 100, 100);
+        }
+    }
+    g.filter(BLUR, 40);
+    var back = g.get();
+    
+    var starsImgs = [];
+    for (var j = 2; j < 6; j++) {
+        background(0, 0);
+        
+        for(var i = 0; i < 70/3; i ++) {
+            var x = random(0, 600);
+            var y = random(0, 600);
+            if (!(x > 70 && x < 530 && y > 70 && y < 130) && !(x > 30 && x < 570 && y > 200 && y < 400) && !(x > 80 && x < 220 && y > 500 && y < 570) && !(x > 380 && x < 520 && y > 500 && y < 570)) {
+                g.fill(random(255, 240), random(255, 230), 200);
+                g.ellipse(x, y, j, j);
+            }
+        }
+        starsImgs.push(g.get());
+    }
+    g.image(back, 0, 0);
+    for (var i in starsImgs) {
+        g.image(starsImgs[i], 0, 0);
+        g.filter(BLUR, 1);
+    }
+    g.filter(BLUR, 1);
+    
+    return g;},
+    ammoImg: function() {
     background(0, 0);
     background(0, 0);
     fill(colorScheme.playerColor);
@@ -371,10 +297,8 @@ var ammoImg = (function() {
     rect(0, 200, 300, 250, 0, 0, 5, 5);
     
     arc(150, 190, 280, 300, -PI, 0);
-    return {image: get(0, 0, 300, 530), width: 300, height: 530};
-})();
-
-var hedgeHog = (function() {
+    return {image: get(0, 0, 300, 530), width: 300, height: 530};},
+    hedgeHog: function() {
     background(0);
     noStroke();
     fill(255);
@@ -401,10 +325,8 @@ var hedgeHog = (function() {
     if (shoop) {
         shoop.mask(shoop);
     }
-    return {image: shoop, width: 400, height: 400};
-})();
-
-var ufo = (function() {
+    return {image: shoop, width: 400, height: 400};},
+    ufo: function() {
     background(0);
     noStroke();
     fill(255);
@@ -436,10 +358,8 @@ var ufo = (function() {
     if (filling) {
         filling.mask(msk);
     }
-    return {image: filling, width: 400, height: 400};
-})();
-
-var wasp = (function(){
+    return {image: filling, width: 400, height: 400};},
+    wasp: function(){
     
 // set up
 background(0, 0);
@@ -554,10 +474,8 @@ rotate(radians(9));
 arc(0, 0, 131, 209, radians(63), radians(119));
 popMatrix();
 
-    return {image: get(0, 0, 400, 400), width: 400, height: 400};
-})();
-
-var coin = (function() {
+    return {image: get(0, 0, 400, 400), width: 400, height: 400};},
+    coin: function() {
     background(0);
 
     noStroke();
@@ -584,8 +502,88 @@ var coin = (function() {
         filling.mask(msk);
     }
 
-    return {image: filling, width: 400, height: 400};
-})();} // images
+    return {image: filling, width: 400, height: 400};},
+}
+
+
+var thrusterImgs = (function() {
+    
+    var thrusterImgs = [];
+    var base = (function() {
+        background(0, 0);
+        fill(255);
+        stroke(255);
+        noStroke();
+        
+        beginShape();
+        vertex(15, 10);
+        vertex(80, 10);
+        vertex(191, 24);
+        vertex(210, 40);
+        vertex(210, 60);
+        vertex(200, 70);
+        vertex(200, 180);
+        vertex(210, 190);
+        vertex(210, 210);
+        vertex(191, 226);
+        vertex(80, 240);
+        vertex(15, 240);
+        vertex(13, 235);
+        vertex(15, 210);
+        vertex(20, 150);
+        vertex(20, 100);
+        vertex(15, 40);
+        vertex(13, 15);
+        endShape(CLOSE);
+        return get();
+    })();
+    
+    var drawThruster = function() {
+        
+        background(0, 0);
+        image(base, 0, 0);
+        
+        beginShape();
+        vertex(210 + random(0, 5), 70);
+        vertex(210 + random(0, 5), 180);
+        vertex(350 + random(-5, 5), 140 + random(-5, 5));
+        vertex(320 + random(-5, 5), 127 + random(-5, 5));
+        vertex(350 + random(-5, 5), 115 + random(-5, 5));
+        endShape(CLOSE);
+    };
+    
+    for (var i = 0; i < 50; i ++) {
+        background(0, 0);
+        image(base, 0, 0);
+        
+        beginShape();
+        vertex(210 + random(0, 5), 70);
+        vertex(210 + random(0, 5), 180);
+        vertex(350 + random(-5, 5), 140 + random(-5, 5));
+        vertex(320 + random(-5, 5), 127 + random(-5, 5));
+        vertex(350 + random(-5, 5), 115 + random(-5, 5));
+        endShape(CLOSE);
+        thrusterImgs.push(get());
+    }
+    
+    return {imgs: thrusterImgs, width: 400, height: 250};
+})();
+
+var homeBackground = images.homeBackground;
+
+var howBackground = images.howBackground;
+
+var pewPew = images.pewPew;
+
+var ammoImg = images.ammoImg;
+
+var hedgeHog = images.hedgeHog;
+
+var ufo = images.ufo;
+
+var wasp = images.wasp;
+
+var coin = images.coin;} // images
 
 {
 var player, enemies, bullets, ammo, stars, _camera, enemyParticles, powerUps;
@@ -844,7 +842,7 @@ var enemyParticles = (function() {
                 this.width = config.width;
                 this.height = config.height;
 
-                this.image = enemies.enemyTypes[this.type].image;
+                this.image = images[enemies.enemyTypes[this.type].image];
 
             };
 
@@ -1058,6 +1056,7 @@ var bullets = (function() {
                         if (e.health <= 0 && this.origin === player && !e.dead) {
                         
                             player.coins += e.coins * constrain(round(random(1, player.coinLuck)), 1, player.coinLuck);
+                            player.ammo ++;
                             e.dead = true;
                             vars.coinAnim += 3;
                         }
@@ -1422,7 +1421,6 @@ var player = (function() {
     };
     
     Player.prototype.shoot = function() {
-        shakeTime = 10;
         for (var i = 0; i < 8; i ++) {
             bullets.add({x: this.position.x + cos(this.gunRotation) * this.r * 2, y: this.position.y + sin(this.gunRotation) * this.r*2, angle: this.gunRotation + radians(random(-20, 20)), speed: 20, damage: this.damage, origin: this});
         }
@@ -1439,12 +1437,12 @@ var enemies = (function() {
             hedgeHog: {
                 acuracy: 1,
                 delay: 50,
-                image: hedgeHog,
+                image: "hedgeHog",
                 width: 0.15,
                 height: 0.15,
                 damage: 2,
                 health: 4,
-                mutations: [["ufo", 0.03]],
+                mutations: [["ufo", 0.1]],
                 aOffset: -PI,
                 liveProb: 0.95,
                 coins: 1,
@@ -1452,12 +1450,12 @@ var enemies = (function() {
             ufo: {
                 acuracy: 0,
                 delay: 3,
-                image: ufo,
+                image: "ufo",
                 width: 0.15,
                 height: 0.15,
                 damage: 0.1,
                 health: 10,
-                mutations: [["wasp", 0.06], ["hedgeHog", 0.005]],
+                mutations: [["wasp", 0.05], ["hedgeHog", 0.005]],
                 aOffset: PI/2,
                 liveProb: 0.95,
                 coins: 1,
@@ -1465,17 +1463,17 @@ var enemies = (function() {
             wasp: {
                 acuracy: 0,
                 delay: 50,
-                image: wasp,
+                image: "wasp",
                 width: 0.15,
                 height: 0.15,
                 damage: 0.5,
                 health: 20,
-                mutations: [["ufo", 0.01]],
+                mutations: [["ufo", 0.0]],
                 aOffset: PI/2,
                 liveProb: 0.95,
                 coins: 2,
                 poisonDuration: 240,
-                poisonIntensity: 0.01,
+                poisonIntensity: 0.05,
                 bulletType: "venom",
             },
         };
@@ -1485,7 +1483,7 @@ var enemies = (function() {
                 this.type = config.type;
                 this.position = new PVector(config.x, config.y);
                 
-                this.image = type.image;
+                this.image = images[type.image];
                 this.width = type.width * this.image.width;
                 this.height = type.height * this.image.height;
                 this.acuracy = type.acuracy;
@@ -1551,7 +1549,6 @@ var enemies = (function() {
             };
             
             Enemy.prototype.shoot = function() {
-                shakeTime = 5;
                 this.shotDelay = this.startShotDelay;
                 var a = atan2(player.position.y - (this.position.y + this.height/2) , player.position.x - (this.position.x + this.width/2));
                 bullets.add(
@@ -1619,7 +1616,7 @@ var enemies = (function() {
             }
             this.enemies[i].run();
            
-            if (this.enemies[i].shotDelay < 1 && vars.countDown < 1 && this.enemies[i].position.y > _camera.position[1] && this.enemies[i].position.y < _camera.position[1] + 550) {
+            if (this.enemies[i].shotDelay < 1 && vars.countDown < 1) {
                 this.enemies[i].shoot();
             }
             
@@ -1631,7 +1628,7 @@ var enemies = (function() {
     };
     
     Enemies.prototype.spawn = function() {
-        if ((frameCount % 90 === 0 && random() < 0.05)) {
+        if ((frameCount % 120 === 0 && random() < 0.02)) {
             // println("spawn");
             this.add({x:random(40, 560), y: _camera.position[1] - random(200, width), type: discoveredEnemies[floor(random(0, discoveredEnemies.length - 0.01))]});
         } else if(this.enemies.length === 0 && random() < 0.01) {
@@ -1933,8 +1930,8 @@ var upgrades = (function() {
 (function() {
     upgrades.add({
         name: "health",
-        costs:  [2 , 5, 10, 20, 35, 55, 80],
-        values: [11, 15, 20, 25, 35, 45, 55],
+        costs:  [5 , 10, 20, 35, 55, 80],
+        values: [15, 20, 25, 35, 45, 55],
         width: 130,
     });
 
@@ -1947,7 +1944,7 @@ var upgrades = (function() {
 
     upgrades.add({
         name: "coins",
-        costs:  [5, 15, 25, 50, 80, 130, 200],
+        costs:  [10, 20, 35, 50, 80, 130, 200],
         values: [2 , 3 , 4 , 6 , 10, 13 , 20 ],
         width: 130,
     });
@@ -2233,8 +2230,8 @@ function displayCoin(playScene) {
         textFont(MPLUS, 20);
     }
 
-    text(player.coins, 29, playScene ? 37 : 3);
-    image(coin.image, 5 - (playScene ? (vars.coinAnim || 0) : 0), (playScene ? 42 - (vars.coinAnim || 0) : 6), coin.width/20 + (playScene ? (vars.coinAnim || 0) * 2.5 : 0), coin.height/20 + (playScene ? (vars.coinAnim || 0) * 2.5 : 0));
+    text(player.coins, 29, playScene ? 31 : 3);
+    image(coin.image, 5 - (playScene ? (vars.coinAnim || 0) : 0), (playScene ? 32 - (vars.coinAnim || 0) : 6), coin.width/20 + (playScene ? (vars.coinAnim || 0) * 2 : 0), coin.height/20 + (playScene ? (vars.coinAnim || 0) * 2 : 0));
 }
 
 function setUp(par1, par2) {
@@ -2289,17 +2286,14 @@ function play() {
         enemyParticles.run();
         
     popMatrix();
-    fill(255);
+    fill(colorScheme.playerColor);
     textAlign(LEFT, TOP);
-    textFont(MPLUS, 26);
+    textFont(MPLUS, 20);
 
     displayCoin(true);
 
-    fill(player.bulletNum? colorScheme.playerColor: color(255, 0, 0));
-
-    text(player.bulletNum + "/" + player.maxBullets, 35, 5);
-    image(ammoImg.image, 5, 2, ammoImg.width/15, ammoImg.height/15);
-    fill(255);
+    text(player.bulletNum + "/" + player.maxBullets, 25, 5);
+    image(ammoImg.image, 5, 2, ammoImg.width/20, ammoImg.height/20);
 
     textAlign(RIGHT, TOP);
 
@@ -2423,6 +2417,90 @@ function transitionScene() {
     transition.run();
 }
 
+function loading() {
+
+    background(vars.backColor);
+    fill(255);
+
+    textAlign(CENTER);
+    textFont(ROWDIES, 80);
+
+    var t = "LOADING";
+    text(t, 300, 300);
+
+    if (!vars.done) {
+
+        var things = Object.keys(images);
+        var l = things.length
+
+        images[things[vars.curLoading]] = images[things[vars.curLoading]]();
+        // images[things[vars.curLoading]] = {img: get(), width: 600, height: 600, h: 600, w: 600, image: get(),};
+        vars.curLoading ++;
+
+
+        if (vars.curLoading >= l) {
+
+            vars.done = true;
+            homeBackground = images.homeBackground;
+
+            howBackground = images.howBackground;
+
+            pewPew = images.pewPew;
+
+            ammoImg = images.ammoImg;
+
+            hedgeHog = images.hedgeHog;
+
+            ufo = images.ufo;
+
+            wasp = images.wasp;
+
+            coin = images.coin;
+        }
+
+        
+    } else if (!vars.doneAll) {
+        (function() {
+        function getSceneImg(sceneToGet) {
+
+            if (sceneToGet === "transitionScene") {
+                return;
+            }
+
+            var startScene = scene;
+
+            if (sceneToGet === "play") {
+                setUp(true, true);
+            } else {
+                changeScene(sceneToGet, true, true);
+            }
+
+            scenes[scene].func(sceneToGet === "dead" ? true : false);
+            buttons.run();
+            return get();
+        }
+
+        for (var i = 0; i < scenesArr.length; i++) {
+            scenes[scenesArr[i]].image = getSceneImg(scenesArr[i]);
+        }})();
+        changeScene("loading", true, true);
+        vars.done = true;
+
+        vars.doneAll = true;
+    } else {
+        changeScene("home", true, true);
+    }
+
+    background(vars.backColor);
+    fill(255);
+
+    textAlign(CENTER);
+    textFont(ROWDIES, 80);
+
+    var t = "LOADING";
+    text(t, 300, 300);
+}
+
 var scenes = {
     play: {func: play, vars: {coinAnim: 0, enemyPoints: 0, countDown: 3, firstFrame: true, startTime: false,}, image: false,},
     dead: {func: dead, vars: {deadImg: get(), anim: 0, message: ""}, image: false,},
@@ -2430,68 +2508,29 @@ var scenes = {
     shop: {func: shop, vars: {page: 0, actualPageX: 0, maxPages: floor((upgrades.upgrades.length - 1)/4), firstFrame: true,}, image: false,},
     how: {func: how, vars: {}, image: false,},
     transitionScene: {func: transitionScene, vars: {}, image: false,},
+    loading: {func: loading, vars: {done: false, doneAll: false, curLoading: 0,}},
 };
 
 var scenesArr = ["play", "dead", "home", "shop", "transitionScene", "how"];
 
 // get the images for each scene
-(function() {
-function getSceneImg(sceneToGet) {
-
-    if (sceneToGet === "transitionScene") {
-        return;
-    }
-
-
-
-    var startScene = scene;
-
-    if (sceneToGet === "play") {
-        setUp(true, true);
-    } else {
-        changeScene(sceneToGet, true, true);
-    }
-
-    scenes[scene].func(sceneToGet === "dead" ? true : false);
-    buttons.run();
-    scene = startScene;
-    return get();
-}
-
-for (var i = 0; i < scenesArr.length; i++) {
-    scenes[scenesArr[i]].image = getSceneImg(scenesArr[i]);
-}})();
 
 changeScene(scene, true, true);} // scenes
 
 {
 draw = function() {
-    try{
-
-        if (shakeTime > 1) {
-            var s = shakeTime/2;
-            shake = [random(-s, s), random(-s, s)];
-            shakeTime --;
-        } else { 
-            shakeTime = 0;
-            
-        }
-        
-        pushMatrix();
-        translate(shake[0], shake[1]);
+    // try{
 
         scenes[scene].func();
 
         buttons.run();
 
-        popMatrix();
-
         click = false;
         rightClick = false;
 
-    }catch(e){
-        println(e);
-    }
+    // }catch(e){
+        // println(e);
+    // }
 };} // draw function
 
 {
@@ -2522,8 +2561,7 @@ mouseReleased = function() {
         clickHold = false;
     }
 };} // user interaction
-
-}
+};
 
 };
 var canvas = document.querySelector("#mycanvas"); 
