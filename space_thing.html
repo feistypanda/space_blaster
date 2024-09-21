@@ -2373,12 +2373,22 @@ function home() {
     textFont(ROWDIES, 50);
     text("-BLASTER-", 300, 170);
     noStroke();
-    fill(30, 15, 30, 255 - vars.frames * 10);
-    rect(0, 0, 600, 600);
-    fill(255, 255 - vars.frames * 10);
-    textFont(ROWDIES, 80);
-    textAlign(CENTER, CENTER);
-    text("LOADING", 300, 300);
+
+    buttons.run();
+
+    if (255 - (vars.frames - 20) * 10 > 0) {
+        fill(30, 15, 30, 255 - (vars.frames - 20) * 10);
+        noStroke();
+        rect(0, 0, 600, 600);
+        fill(255, 255 - (vars.frames - 20) * 10);
+        textFont(ROWDIES, 80);
+        textAlign(CENTER);
+        var t = "LOADING";
+        for(var i = 0; i < Object.keys(images).length/2; i ++) {
+            t += ".";
+        }
+        text(t, 300, 300);
+    }
 }
 
 function shop() {
@@ -2431,13 +2441,6 @@ function transitionScene() {
 }
 
 function loading() {
-    fill(255);
-
-    textAlign(CENTER);
-    textFont(ROWDIES, 80);
-
-    var t = "LOADING";
-    text(t, 300, 300);
 
     if (!vars.done) {
 
@@ -2453,6 +2456,9 @@ function loading() {
         textFont(ROWDIES, 80);
 
         var t = "LOADING";
+        for (var i = 0; i < vars.curLoading/2; i ++) {
+            t += ".";
+        }
         text(t, 300, 300);
         
         vars.curLoading ++;
@@ -2508,7 +2514,23 @@ function loading() {
         vars.done = true;
 
         vars.doneAll = true;
+        background(30, 15, 30);
+        textFont(ROWDIES, 80);
+        textAlign(CENTER);
+        var t = "LOADING";
+        for(var i = 0; i < Object.keys(images).length/2; i ++) {
+            t += ".";
+        }
+        text(t, 300, 300);
     } else {
+        background(30, 15, 30);
+        textFont(ROWDIES, 80);
+        textAlign(CENTER);
+        var t = "LOADING";
+        for(var i = 0; i < Object.keys(images).length/2; i ++) {
+            t += ".";
+        }
+        text(t, 300, 300);
         changeScene("home", true, true);
     }
 }
@@ -2537,7 +2559,9 @@ draw = function() {
 
         scenes[scene].func();
 
-        buttons.run();
+        if (scene !== "home") {
+            buttons.run();
+        }
 
         click = false;
         rightClick = false;
