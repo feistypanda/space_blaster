@@ -7,10 +7,13 @@
 
 
 
-        <title>A Tab =D</title> 
+        <title>old webpage</title> 
         <style type="text/css">
 
-            
+            *{
+                margin: 0px;
+                overflow: hidden;
+            }            
             
         </style>
     </head>
@@ -164,45 +167,45 @@ function changeScene(to, changeVars, fromTransition) {
 
 var images = {
     pewPew: function() {
-    background(0);
-    pushMatrix();
-    translate(342, 57);
-    scale(-1, 1);
-    noStroke();
-    fill(255);
-    
-    ellipse(20, 0, 22, 70);
-    ellipse(44, 0, 24, 90);
-    ellipse(72, 0, 28, 110);
-    rect(170, -55, 170, 110, 40, 100, 100, 40);
-    stroke(255);
-    strokeWeight(25);
-    line(10, 0, 200, 0);
-    noFill();
-    arc(145, 35, 70, 70, -PI/2, -0.25);
-    arc(145, -35, 70, 70, 0.25, PI/2);
-    strokeWeight(30);
-    fill(255);
-    strokeJoin(ROUND);
-    beginShape();
-    vertex(250, 57);
-    vertex(270, 110);
-    vertex(320, 110);
-    vertex(280, 57);
-    endShape();
-    
-    fill(255, 0, 0, 100);
-    noStroke();
-    var msk = get(0, 0, 341, 184);
-    background(colorScheme.playerColor);
-    var filling = get(0, 0, 341, 184);
-    popMatrix();
-    if (filling) {
-        filling.mask(msk);
-    }
-    return {img: filling, w: 341, h: 184};},
+        var g = createGraphics(600, 600, P2D);
+        g.background(0);
+        g.pushMatrix();
+        g.translate(342, 57);
+        g.scale(-1, 1);
+        g.noStroke();
+        g.fill(255);
+        
+        g.ellipse(20, 0, 22, 70);
+        g.ellipse(44, 0, 24, 90);
+        g.ellipse(72, 0, 28, 110);
+        g.rect(170, -55, 170, 110, 40, 100, 100, 40);
+        g.stroke(255);
+        g.strokeWeight(25);
+        g.line(10, 0, 200, 0);
+        g.noFill();
+        g.arc(145, 35, 70, 70, -PI/2, -0.25);
+        g.arc(145, -35, 70, 70, 0.25, PI/2);
+        g.strokeWeight(30);
+        g.fill(255);
+        g.strokeJoin(ROUND);
+        g.beginShape();
+        g.vertex(250, 57);
+        g.vertex(270, 110);
+        g.vertex(320, 110);
+        g.vertex(280, 57);
+        g.endShape();
+        
+        g.fill(255, 0, 0, 100);
+        g.noStroke();
+        var msk = g.get(0, 0, 341, 184);
+        g.background(colorScheme.playerColor);
+        var filling = g.get(0, 0, 341, 184);
+        g.popMatrix();
+        if (filling) {
+            filling.mask(msk);
+        }
+        return {img: filling, w: 341, h: 184};},
     homeBackground: function() {
-
     var g = createGraphics(600, 600, P2D);
 
     randomSeed(5);
@@ -244,8 +247,36 @@ var images = {
     g.filter(BLUR, 1);
     
     return g;},
-    howBackground: function() {
+    coin: function() {
+        var g = createGraphics(600, 600, P2D);
+        g.background(0);
 
+        g.noStroke();
+
+        g.fill(255);
+        g.ellipse(200, 200, 400, 400);
+
+        g.fill(0);
+        g.ellipse(200, 200, 370, 370);
+
+        g.fill(255);
+        g.ellipse(200, 200, 340, 340);
+
+        g.fill(0);
+
+        g.textFont(COMIC_MS, 230);
+        g.textAlign(CENTER, CENTER);
+
+        g.text("$", 200, 185);
+
+        var filling = g.get(0, 0, 400, 400);
+        var msk = filling;
+        if (filling) {
+            filling.mask(msk);
+        }
+
+        return {image: filling, width: 400, height: 400};},
+    howBackground: function() {
     var g = createGraphics(600, 600, P2D);
 
     randomSeed(5);
@@ -288,223 +319,197 @@ var images = {
     
     return g;},
     ammoImg: function() {
-    background(0, 0);
-    background(0, 0);
-    fill(colorScheme.playerColor);
-    noStroke();
-    rect(0, 500, 300, 30);
-    rect(37.5, 460, 225, 30);
-    rect(0, 200, 300, 250, 0, 0, 5, 5);
-    
-    arc(150, 190, 280, 300, -PI, 0);
-    return {image: get(0, 0, 300, 530), width: 300, height: 530};},
+        var g = createGraphics(600, 600, P2D);
+        g.background(0, 0);
+        g.fill(colorScheme.playerColor);
+        g.noStroke();
+        g.rect(0, 500, 300, 30);
+        g.rect(37.5, 460, 225, 30);
+        g.rect(0, 200, 300, 250, 0, 0, 5, 5);
+        
+        g.arc(150, 190, 280, 300, -PI, 0);
+        return {image: g.get(0, 0, 300, 530), width: 300, height: 530};},
     hedgeHog: function() {
-    background(0);
-    noStroke();
-    fill(255);
-    ellipse(200, 200, 270, 270);
-    beginShape();
-    randomSeed(40);
-    for(var i = 0; i < 360; i += 20){
-        vertex(200 + cos(radians(i))*135 + random(5, -5), 200 + sin(radians(i)) * 135 + random(5, -5));
-        vertex(200 + cos(radians(i) + radians(10))*175 + random(5, -5), 200 + sin(radians(i) + radians(10)) * 175 + random(5, -5));
-    }
-    endShape();
-    randomSeed(501);
-    beginShape();
-    fill(0);
-    for(var i = 0; i < 360; i += 30) {
-        vertex(cos(radians(i))*86 + 171 + random(-4, 4), sin(radians(i))*57 + 166 + random(-4, 4));
-    }
-    endShape();
-    
-    fill(255);
-    ellipse(200, 175, 30, 30);
-    ellipse(129, 164, 30, 30);
-    var shoop = get(0, 0, 400, 400);
-    if (shoop) {
-        shoop.mask(shoop);
-    }
-    return {image: shoop, width: 400, height: 400};},
+        var g = createGraphics(600, 600, P2D);
+        g.background(0);
+        g.noStroke();
+        g.fill(255);
+        g.ellipse(200, 200, 270, 270);
+        g.beginShape();
+        randomSeed(40);
+        for(var i = 0; i < 360; i += 20){
+            g.vertex(200 + cos(radians(i))*135 + random(5, -5), 200 + sin(radians(i)) * 135 + random(5, -5));
+            g.vertex(200 + cos(radians(i) + radians(10))*175 + random(5, -5), 200 + sin(radians(i) + radians(10)) * 175 + random(5, -5));
+        }
+        g.endShape();
+        randomSeed(501);
+        g.beginShape();
+        g.fill(0);
+        for(var i = 0; i < 360; i += 30) {
+            g.vertex(cos(radians(i))*86 + 171 + random(-4, 4), sin(radians(i))*57 + 166 + random(-4, 4));
+        }
+        g.endShape();
+        
+        g.fill(255);
+        g.ellipse(200, 175, 30, 30);
+        g.ellipse(129, 164, 30, 30);
+        var shoop = g.get(0, 0, 400, 400);
+        if (shoop) {
+            shoop.mask(shoop);
+        }
+        return {image: shoop, width: 400, height: 400};},
     ufo: function() {
-    background(0);
-    noStroke();
-    fill(255);
-    ellipse(200, 250, 350, 120);
-    stroke(255);
-    strokeWeight(17);
-    fill(0);
-    ellipse(200, 220, 170, 160);
-    noFill();
-    arc(200, 200, 250, 100, radians(30), radians(150));
-    noStroke();
-    fill(255);
-    rect(100, 245, 200, 50);
-    fill(0);
-    ellipse(200, 286, 25, 25);
-    ellipse(133, 280, 25, 25);
-    ellipse(267, 280, 25, 25);
-    ellipse(335, 261, 25, 25);
-    ellipse(65, 261, 25, 25);
+        var g = createGraphics(600, 600, P2D);
+        g.background(0);
+        g.noStroke();
+        g.fill(255);
+        g.ellipse(200, 250, 350, 120);
+        g.stroke(255);
+        g.strokeWeight(17);
+        g.fill(0);
+        g.ellipse(200, 220, 170, 160);
+        g.noFill();
+        g.arc(200, 200, 250, 100, radians(30), radians(150));
+        g.noStroke();
+        g.fill(255);
+        g.rect(100, 245, 200, 50);
+        g.fill(0);
+        g.ellipse(200, 286, 25, 25);
+        g.ellipse(133, 280, 25, 25);
+        g.ellipse(267, 280, 25, 25);
+        g.ellipse(335, 261, 25, 25);
+        g.ellipse(65, 261, 25, 25);
 
-    stroke(255);
-    strokeWeight(17);
-    noFill();
-    point(251, 210);
-    arc(200, 200, 80, 60, radians(-90), radians(-45));
+        g.stroke(255);
+        g.strokeWeight(17);
+        g.noFill();
+        g.point(251, 210);
+        g.arc(200, 200, 80, 60, radians(-90), radians(-45));
 
-    var msk = get(0, 0, 400, 400);
-    var filling = get(0, 0, 400, 400);
-    if (filling) {
-        filling.mask(msk);
-    }
-    return {image: filling, width: 400, height: 400};},
+        var msk = g.get(0, 0, 400, 400);
+        var filling = g.get(0, 0, 400, 400);
+        if (filling) {
+            filling.mask(msk);
+        }
+        return {image: filling, width: 400, height: 400};},
     wasp: function(){
+        var g = createGraphics(600, 600, P2D);
     
-// set up
-background(0, 0);
-noFill();
-stroke(255);
-strokeWeight(16);
+        // set up
+        g.background(0, 0);
+        g.noFill();
+        g.stroke(255);
+        g.strokeWeight(16);
 
-// middle
-arc(200, 131, 90, 82, radians(-30), radians(210));
+        // middle
+        g.arc(200, 131, 90, 82, radians(-30), radians(210));
 
-// head
-arc(200, 89, 82, 50, radians(-30), radians(210));
+        // head
+        g.arc(200, 89, 82, 50, radians(-30), radians(210));
 
-// nose ig
-beginShape();
-var mx = 36;
-var x = 200 - mx, y = 77;
-curveVertex(x, y);
-curveVertex(200, y - 25);
-curveVertex(x, y);
-curveVertex(208, y);
-endShape();
+        // nose ig
+        g.beginShape();
+        var mx = 36;
+        var x = 200 - mx, y = 77;
+        g.curveVertex(x, y);
+        g.curveVertex(200, y - 25);
+        g.curveVertex(x, y);
+        g.curveVertex(208, y);
+        g.endShape();
 
-beginShape();
-var x = 200 + mx;
-curveVertex(x, y);
-curveVertex(200, y - 25);
-curveVertex(x, y);
-curveVertex(192, y);
-endShape();
+        g.beginShape();
+        var x = 200 + mx;
+        g.curveVertex(x, y);
+        g.curveVertex(200, y - 25);
+        g.curveVertex(x, y);
+        g.curveVertex(192, y);
+        g.endShape();
 
-// antenae
-arc(250, 62, 50, 65, radians(180), radians(256));
-arc(150, 62, 50, 65, radians(-76), 0);
+        // antenae
+        g.arc(250, 62, 50, 65, radians(180), radians(256));
+        g.arc(150, 62, 50, 65, radians(-76), 0);
 
-//body
-pushMatrix();
-translate(191, 248);
-rotate(radians(-1));
-arc(0, 0, 124, 200, radians(-50), radians(-14));
-arc(-9, 0, 143, 200, radians(-14), radians(41));
-popMatrix();
+        //body
+        g.pushMatrix();
+        g.translate(191, 248);
+        g.rotate(radians(-1));
+        g.arc(0, 0, 124, 200, radians(-50), radians(-14));
+        g.arc(-9, 0, 143, 200, radians(-14), radians(41));
+        g.popMatrix();
 
-pushMatrix();
-translate(208, 248);
-rotate(radians(1));
-scale(-1, 1);
-arc(0, 0, 124, 200, radians(-50), radians(-14));
-arc(-9, 0, 143, 200, radians(-14), radians(41));
-popMatrix();
+        g.pushMatrix();
+        g.translate(208, 248);
+        g.rotate(radians(1));
+        g.scale(-1, 1);
+        g.arc(0, 0, 124, 200, radians(-50), radians(-14));
+        g.arc(-9, 0, 143, 200, radians(-14), radians(41));
+        g.popMatrix();
 
 
-// name of this arc = SQUARE + "";
-arc(200, 303, 80, 59, radians(18), radians(162));
+        // name of this arc = SQUARE + "";
+        g.arc(200, 303, 80, 59, radians(18), radians(162));
 
-// stinger
-strokeWeight(5);
-fill(255);
+        // stinger
+        g.strokeWeight(5);
+        g.fill(255);
 
-beginShape();
-    vertex(190, 335);
-    vertex(210, 335);
-    vertex(200, 373);
-endShape(CLOSE);
+        g.beginShape();
+            g.vertex(190, 335);
+            g.vertex(210, 335);
+            g.vertex(200, 373);
+        g.endShape(CLOSE);
 
-noFill();
+        g.noFill();
 
-// stripes
+        // stripes
 
-strokeWeight(20);
-arc(200, 200, 84, 20, 0, PI);
-arc(200, 245, 102, 20, 0, PI);
-arc(200, 290, 89, 12, 0, PI);
+        g.strokeWeight(20);
+        g.arc(200, 200, 84, 20, 0, PI);
+        g.arc(200, 245, 102, 20, 0, PI);
+        g.arc(200, 290, 89, 12, 0, PI);
 
-// wiiiings
+        // wiiiings
 
-strokeWeight(14);
+        g.strokeWeight(14);
 
-// left
-pushMatrix();
-translate(87, 148);
-rotate(radians(159));
-arc(0, 0, 143, 60, 0, PI);
-popMatrix();
-pushMatrix();
-translate(105, 143);
-rotate(radians(-30));
-arc(0, 0, 157, 60, radians(63), radians(119));
-popMatrix();
-pushMatrix();
-translate(40, 271);
-scale(1, -1);
-rotate(radians(-9));
-arc(0, 0, 131, 209, radians(63), radians(119));
-popMatrix();
+        // left
+        g.pushMatrix();
+        g.translate(87, 148);
+        g.rotate(radians(159));
+        g.arc(0, 0, 143, 60, 0, PI);
+        g.popMatrix();
+        g.pushMatrix();
+        g.translate(105, 143);
+        g.rotate(radians(-30));
+        g.arc(0, 0, 157, 60, radians(63), radians(119));
+        g.popMatrix();
+        g.pushMatrix();
+        g.translate(40, 271);
+        g.scale(1, -1);
+        g.rotate(radians(-9));
+        g.arc(0, 0, 131, 209, radians(63), radians(119));
+        g.popMatrix();
 
-// right
-pushMatrix();
-translate(200 + (200 - 87), 148);
-rotate(radians(201));
-arc(0, 0, 143, 60, 0, PI);
-popMatrix();
-pushMatrix();
-translate(200 + (200 - 105), 143);
-rotate(radians(34));
-arc(0, 0, 157, 60, radians(63), radians(119));
-popMatrix();
-pushMatrix();
-translate(200 + (200 - 40), 271);
-scale(1, -1);
-rotate(radians(9));
-arc(0, 0, 131, 209, radians(63), radians(119));
-popMatrix();
+        // right
+        g.pushMatrix();
+        g.translate(200 + (200 - 87), 148);
+        g.rotate(radians(201));
+        g.arc(0, 0, 143, 60, 0, PI);
+        g.popMatrix();
+        g.pushMatrix();
+        g.translate(200 + (200 - 105), 143);
+        g.rotate(radians(34));
+        g.arc(0, 0, 157, 60, radians(63), radians(119));
+        g.popMatrix();
+        g.pushMatrix();
+        g.translate(200 + (200 - 40), 271);
+        g.scale(1, -1);
+        g.rotate(radians(9));
+        g.arc(0, 0, 131, 209, radians(63), radians(119));
+        g.popMatrix();
 
-    return {image: get(0, 0, 400, 400), width: 400, height: 400};},
-    coin: function() {
-    background(0);
-
-    noStroke();
-
-    fill(255);
-    ellipse(200, 200, 400, 400);
-
-    fill(0);
-    ellipse(200, 200, 370, 370);
-
-    fill(255);
-    ellipse(200, 200, 340, 340);
-
-    fill(0);
-
-    textFont(COMIC_MS, 230);
-    textAlign(CENTER, CENTER);
-
-    text("$", 200, 185);
-
-    var filling = get(0, 0, 400, 400);
-    var msk = filling;
-    if (filling) {
-        filling.mask(msk);
-    }
-
-    return {image: filling, width: 400, height: 400};},
+        return {image: get(0, 0, 400, 400), width: 400, height: 400};},
 }
-
 
 var thrusterImgs = (function() {
     
@@ -569,21 +574,21 @@ var thrusterImgs = (function() {
     return {imgs: thrusterImgs, width: 400, height: 250};
 })();
 
-var homeBackground = images.homeBackground;
+var homeBackground = false;
 
-var howBackground = images.howBackground;
+var howBackground = false;
 
-var pewPew = images.pewPew;
+var pewPew = false;
 
-var ammoImg = images.ammoImg;
+var ammoImg = false;
 
-var hedgeHog = images.hedgeHog;
+var hedgeHog = false;
 
-var ufo = images.ufo;
+var ufo = false;
 
-var wasp = images.wasp;
+var wasp = false;
 
-var coin = images.coin;} // images
+var coin = false;} // images
 
 {
 var player, enemies, bullets, ammo, stars, _camera, enemyParticles, powerUps;
@@ -2359,6 +2364,7 @@ function dead(getingScene) {
 }
 
 function home() {
+    vars.frames ++;
     image(homeBackground, 0, 0);
     fill(255);
     textFont(ROWDIES, 90);
@@ -2366,6 +2372,13 @@ function home() {
     text("-SPACE-", 300, 100);
     textFont(ROWDIES, 50);
     text("-BLASTER-", 300, 170);
+    noStroke();
+    fill(30, 15, 30, 255 - vars.frames * 10);
+    rect(0, 0, 600, 600);
+    fill(255, 255 - vars.frames * 10);
+    textFont(ROWDIES, 80);
+    textAlign(CENTER, CENTER);
+    text("LOADING", 300, 300);
 }
 
 function shop() {
@@ -2418,8 +2431,6 @@ function transitionScene() {
 }
 
 function loading() {
-
-    background(vars.backColor);
     fill(255);
 
     textAlign(CENTER);
@@ -2434,7 +2445,16 @@ function loading() {
         var l = things.length
 
         images[things[vars.curLoading]] = images[things[vars.curLoading]]();
-        // images[things[vars.curLoading]] = {img: get(), width: 600, height: 600, h: 600, w: 600, image: get(),};
+        
+        background(colorScheme.backColor);
+        fill(255);
+
+        textAlign(CENTER);
+        textFont(ROWDIES, 80);
+
+        var t = "LOADING";
+        text(t, 300, 300);
+        
         vars.curLoading ++;
 
 
@@ -2482,6 +2502,7 @@ function loading() {
 
         for (var i = 0; i < scenesArr.length; i++) {
             scenes[scenesArr[i]].image = getSceneImg(scenesArr[i]);
+            background(30, 15, 30);
         }})();
         changeScene("loading", true, true);
         vars.done = true;
@@ -2490,21 +2511,12 @@ function loading() {
     } else {
         changeScene("home", true, true);
     }
-
-    background(vars.backColor);
-    fill(255);
-
-    textAlign(CENTER);
-    textFont(ROWDIES, 80);
-
-    var t = "LOADING";
-    text(t, 300, 300);
 }
 
 var scenes = {
-    play: {func: play, vars: {coinAnim: 0, enemyPoints: 0, countDown: 3, firstFrame: true, startTime: false,}, image: false,},
+    play: {func: play, vars: {coinAnim: 0, enemyPoints: 0, countDown: 3, firstFrame: true, startTime: false}, image: false,},
     dead: {func: dead, vars: {deadImg: get(), anim: 0, message: ""}, image: false,},
-    home: {func: home, vars: {}, image: false,},
+    home: {func: home, vars: {frames: 0,}, image: false,},
     shop: {func: shop, vars: {page: 0, actualPageX: 0, maxPages: floor((upgrades.upgrades.length - 1)/4), firstFrame: true,}, image: false,},
     how: {func: how, vars: {}, image: false,},
     transitionScene: {func: transitionScene, vars: {}, image: false,},
@@ -2519,6 +2531,8 @@ changeScene(scene, true, true);} // scenes
 
 {
 draw = function() {
+  
+    background(30, 15, 30); // makes the loading thing work for some reason
     // try{
 
         scenes[scene].func();
@@ -2531,6 +2545,7 @@ draw = function() {
     // }catch(e){
         // println(e);
     // }
+    
 };} // draw function
 
 {
@@ -2569,4 +2584,5 @@ var processingInstance = new Processing(canvas, programCode);}
 
 main();
     </script>
+    <script></script>
 </html> 
