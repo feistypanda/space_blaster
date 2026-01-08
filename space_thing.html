@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html> 
     <head>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7,7 +6,7 @@
 
 
 
-        <title>Space Blaster</title> 
+        <title>[GAME] Space Blaster [DEMO]</title> 
         <style type="text/css">
 
             *{
@@ -79,6 +78,7 @@ var scene = "loading";
 var firstTimeAtHome = 0;
 var scenes;
 var deathImage;
+var screenShake = 0;
 
 // mice
 var rightClick,
@@ -1273,6 +1273,9 @@ var player = (function() {
         this.health = this.maxHealth;
         this.sheildSize = this.maxSheildSize;
         this.dead = false;
+        
+        this.poisonDuration = 0;
+        this.poisonIntensity = 0;
     };
     
     Player.prototype.applyForce = function(force) {
@@ -1396,6 +1399,12 @@ var player = (function() {
             r: player.sheildR,
             SW: player.sheildSW,
         };
+        
+        if (this.position.y + this.r > 400 && _camera.position[1] < 200) {
+            
+            this.position.y = 400 - this.r;
+            this.velocity.y = 0;
+        }
     };
     
     Player.prototype.run = function() {
@@ -1427,6 +1436,7 @@ var player = (function() {
     };
     
     Player.prototype.shoot = function() {
+        screenShake += 10;
         for (var i = 0; i < 8; i ++) {
             bullets.add({x: this.position.x + cos(this.gunRotation) * this.r * 2, y: this.position.y + sin(this.gunRotation) * this.r*2, angle: this.gunRotation + radians(random(-20, 20)), speed: 20, damage: this.damage, origin: this});
         }
@@ -1556,6 +1566,7 @@ var enemies = (function() {
             
             Enemy.prototype.shoot = function() {
                 this.shotDelay = this.startShotDelay;
+                screenShake += this.startShotDelay * 0.2;
                 var a = atan2(player.position.y - (this.position.y + this.height/2) , player.position.x - (this.position.x + this.width/2));
                 bullets.add(
                     {
@@ -1634,7 +1645,7 @@ var enemies = (function() {
     };
     
     Enemies.prototype.spawn = function() {
-        if ((frameCount % 120 === 0 && random() < 0.02)) {
+        if ((frameCount % 60 === 0 && random() < 0.02)) {
             // println("spawn");
             this.add({x:random(40, 560), y: _camera.position[1] - random(200, width), type: discoveredEnemies[floor(random(0, discoveredEnemies.length - 0.01))]});
         } else if(this.enemies.length === 0 && random() < 0.01) {
@@ -2254,7 +2265,7 @@ function setUp(par1, par2) {
 
     // reset enemies
     enemies.enemies = [];
-    enemies.add({x:random(100, width - 100), y: random(0, width), type: "hedgeHog"});
+    enemies.add({x:random(100, width - 100), y: random(0, 300), type: "hedgeHog"});
     enemyParticles.particles = [];
     discoveredEnemies = ["hedgeHog"];
 
@@ -2266,7 +2277,8 @@ function setUp(par1, par2) {
 }} // utility functions part two
 
 {
-function play() {
+function play(displayGround) {
+    displayGround = !displayGround;
 
     if (vars.firstFrame) {
         vars.firstFrame = false;
@@ -2283,6 +2295,8 @@ function play() {
     pushMatrix();
         
         translate(-_camera.position[0], -_camera.position[1]);
+        
+        
 
         stars.run();
         player.run();
@@ -2290,6 +2304,10 @@ function play() {
         bullets.run();
         enemies.run();
         enemyParticles.run();
+        
+        fill(240);
+        noStroke();
+        rect(0, 400, 600, 200);
         
     popMatrix();
 
@@ -2514,7 +2532,7 @@ function loading() {
                 changeScene(sceneToGet, true, true);
             }
 
-            scenes[scene].func((sceneToGet === "dead" || sceneToGet === "home") ? true : false);
+            scenes[scene].func((sceneToGet === "dead" || sceneToGet === "home" || sceneToGet === "play") ? true : false);
             buttons.run();
             return get();
         }
@@ -2566,10 +2584,13 @@ changeScene(scene, true, true);} // scenes
 
 {
 draw = function() {
+    
+    screenShake /= 1.3;
   
     background(30, 15, 30); // makes the loading thing work for some reason
     // try{
-
+    pushMatrix();
+    translate(round(random(-screenShake, screenShake)), round(random(-screenShake, screenShake)));
         scenes[scene].func();
 
         if (scene !== "home") {
@@ -2578,7 +2599,7 @@ draw = function() {
 
         click = false;
         rightClick = false;
-
+    popMatrix();
     // }catch(e){
         // println(e);
     // }
